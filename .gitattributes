@@ -1,0 +1,5 @@
+# Fuerza a que todos los archivos de código usen LF en Git
+* text=auto eol=lf
+
+# Archivos batch de Windows pueden mantener CRLF
+*.cmd text eol=crlf

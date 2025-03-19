@@ -43,7 +43,7 @@ INSERT INTO roles (name) VALUES ('ADMIN') ON CONFLICT (name) DO NOTHING;
 
 -- Insertar usuario ADMIN (la contraseña debe estar encriptada en producción)
 INSERT INTO users (username, password, enabled) 
-VALUES ('admin', '$2a$10$eBqvvLP3Iz1eN9a1HGV6peOc9FxFQG6.V1N48QEX6FgA9f2DJshVO', TRUE) 
+VALUES ('admin', '$2a$12$HlJDc8.E7vkoOUfm8CK1.O3VvmCbfZ1cwdFKM59roZf6zdJljOXwi', TRUE) 
 ON CONFLICT (username) DO NOTHING;
 
 -- Asignar rol ADMIN al usuario ADMIN

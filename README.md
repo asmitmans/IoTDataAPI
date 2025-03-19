@@ -86,3 +86,24 @@ Para configurar la conexión, sigue estos pasos:
 3. Guarda los cambios y ejecuta el proyecto.
 
 ---
+
+### Endpoints de Autenticación y Acceso
+
+- **`POST /api/auth/login`** → Inicia sesión y devuelve un **JWT**.
+   - Enviar `username` y `password` en el **body** (JSON).
+   - Respuesta: `{ "accessToken": "JWT_TOKEN" }`.
+
+- **`GET /api/companies`** → Devuelve la lista de compañías (requiere autenticación).
+   - Incluir el **JWT** en el header:
+     ```http
+     Authorization: Bearer JWT_TOKEN
+     ```
+   - Respuesta: `200 OK` si el usuario tiene `ROLE_ADMIN`.
+
+**Notas:**
+- Todos los endpoints protegidos requieren autenticación vía **JWT**.
+- Usar el token devuelto en el login para acceder a recursos protegidos.
+
+---
+
+

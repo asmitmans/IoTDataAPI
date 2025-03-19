@@ -1,27 +1,30 @@
 package com.futuro.iotdataapi.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
+import com.futuro.iotdataapi.dto.AuthLoginRequest;
+import com.futuro.iotdataapi.dto.AuthResponse;
+import com.futuro.iotdataapi.service.UserDetailsServiceImpl;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/auth")
 public class AuthController {
 
-    @GetMapping("/public")
-    public String publicEndpoint() {
-        return "Este endpoint es publico";
-    }
+    private final UserDetailsServiceImpl userDetailsService;
 
-    @GetMapping("/admin")
-    public String adminEndpoint() {
-        return "Este es endpoint es solo para ADMIN";
+    public AuthController(UserDetailsServiceImpl userDetailsService) {
+        this.userDetailsService = userDetailsService;
     }
 
     @PostMapping("/login")
-    public String login() {
-        return "Simulación de login: Aquí debería generarse el token JWT (se implementará en el siguiente paso).";
+    public ResponseEntity<AuthResponse> login(@RequestBody @Valid AuthLoginRequest userRequest) {
+        System.out.println("hola");
+        return new ResponseEntity<>(this.userDetailsService.loginUser(userRequest), HttpStatus.OK);
     }
 
 }

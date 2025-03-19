@@ -41,7 +41,7 @@ CREATE TABLE user_roles (
 -- Insertar rol ADMIN
 INSERT INTO roles (name) VALUES ('ADMIN') ON CONFLICT (name) DO NOTHING;
 
--- Insertar usuario ADMIN (la contraseña debe estar encriptada en producción)
+-- Insertar usuario ADMIN  
 INSERT INTO users (username, password, enabled) 
 VALUES ('admin', '$2a$12$HlJDc8.E7vkoOUfm8CK1.O3VvmCbfZ1cwdFKM59roZf6zdJljOXwi', TRUE) 
 ON CONFLICT (username) DO NOTHING;

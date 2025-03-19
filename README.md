@@ -72,7 +72,7 @@ Para cambiar la contraseña por una más segura, sigue estos pasos:
    UPDATE users SET password = 'nueva_hash' WHERE username = 'admin';
    ```
 
-## Configuración del archivo `application.properties`
+## Configuración del archivo `application.properties`   
 
 Este archivo contiene la configuración de la base de datos y 
 **no se encuentra en el repositorio por seguridad**.
@@ -84,34 +84,5 @@ Para configurar la conexión, sigue estos pasos:
 2. Edita el archivo y reemplaza `tu_bbdd`, `tu_usuario` y `tu_contraseña` con las 
    credenciales correctas de tu base de datos PostgreSQL.
 3. Guarda los cambios y ejecuta el proyecto.
-
----
-
-
-
-
-
-
-
-
-
-
-
-## Configuración en Spring Boot
-
-Configura la conexión a la base de datos en el archivo `application.properties` o `application.yml`:
-
-Si usas **`application.properties`**:
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/iot_data_api
-spring.datasource.username=tu_usuario
-spring.datasource.password=tu_contraseña
-spring.datasource.driver-class-name=org.postgresql.Driver
-
-spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
-spring.jpa.hibernate.ddl-auto=validate
-spring.jpa.show-sql=true
-```
 
 ---

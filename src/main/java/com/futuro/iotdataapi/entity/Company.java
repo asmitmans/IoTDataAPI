@@ -26,7 +26,7 @@ public class Company {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "company_name", nullable = false, length = 255)
+    @Column(name = "company_name", nullable = false, length = 100)
     private String companyName;
 
     @Column(name = "company_api_key", nullable = false, length = 255)

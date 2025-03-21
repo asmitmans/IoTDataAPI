@@ -24,58 +24,58 @@ public class LocationServiceImpl implements LocationService {
 
 	@Override
 	public List<LocationDTO> findAll() {
-		return locationRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
-	}
+        return locationRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
+    }
 
 	@Override
-	public Optional<LocationDTO> findById(Integer id) {
-		return locationRepository.findById(id).map(this::toDTO);
-	}
+    public Optional<LocationDTO> findById(Integer id) {
+        return locationRepository.findById(id).map(this::toDTO);
+    }
 
 	@Override
-	public LocationDTO save(LocationRequestDTO request) {
-		Company company = companyRepository.findById(request.getCompanyId())
-				.orElseThrow(() -> new RuntimeException("Company not found with id: " + request.getCompanyId()));
+    public LocationDTO save(LocationRequestDTO request) {
+        Company company = companyRepository.findById(request.getCompanyId()).orElseThrow(() -> new RuntimeException("Company not found with id: " + request.getCompanyId()));
 
-		Location location = Location.builder().
-				company(company)
-				.locationName(request.getLocationName())
-				.locationCountry(request.getLocationCountry())
-				.locationCity(request.getLocationCity())
-				.locationMeta(request.getLocationMeta())
-				.build();
+        Location location = Location.builder()
+                .company(company)
+                .locationName(request.getLocationName())
+                .locationCountry(request.getLocationCountry())
+                .locationCity(request.getLocationCity())
+                .locationMeta(request.getLocationMeta())
+                .build();
 
-		return toDTO(locationRepository.save(location));
-	}
-
-	@Override
-	public LocationDTO update(Integer id, LocationRequestDTO request) {
-		Location location = locationRepository.findById(id).orElseThrow(() -> new RuntimeException("Location not found with id: " + id));
-
-		Company company = companyRepository.findById(request.getCompanyId()).orElseThrow(() -> new RuntimeException("Company not found with id: " + request.getCompanyId()));
-
-		location.setCompany(company);
-		location.setLocationName(request.getLocationName());
-		location.setLocationCountry(request.getLocationCountry());
-		location.setLocationCity(request.getLocationCity());
-		location.setLocationMeta(request.getLocationMeta());
-
-		return toDTO(locationRepository.save(location));
-	}
+        return toDTO(locationRepository.save(location));
+    }
 
 	@Override
-	public void delete(Integer id) {
-		locationRepository.deleteById(id);
-	}
+    public LocationDTO update(Integer id, LocationRequestDTO request) {
+        Location location = locationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Location not found with id: " + id));
 
-	private LocationDTO toDTO(Location location) {
-		return LocationDTO.builder()
-				.id(location.getId())
-				.companyId(location.getCompany().getId())
-				.locationName(location.getLocationName())
-				.locationCountry(location.getLocationCountry())
-				.locationCity(location.getLocationCity())
-				.locationMeta(location.getLocationMeta())
-				.build();
-	}
+        Company company = companyRepository.findById(request.getCompanyId()).orElseThrow(() -> new RuntimeException("Company not found with id: " + request.getCompanyId()));
+
+        location.setCompany(company);
+        location.setLocationName(request.getLocationName());
+        location.setLocationCountry(request.getLocationCountry());
+        location.setLocationCity(request.getLocationCity());
+        location.setLocationMeta(request.getLocationMeta());
+
+        return toDTO(locationRepository.save(location));
+    }
+
+	@Override
+    public void delete(Integer id) {
+        locationRepository.deleteById(id);
+    }
+
+    private LocationDTO toDTO(Location location) {
+        return LocationDTO.builder()
+                .id(location.getId())
+                .companyId(location.getCompany().getId())
+                .locationName(location.getLocationName())
+                .locationCountry(location.getLocationCountry())
+                .locationCity(location.getLocationCity())
+                .locationMeta(location.getLocationMeta())
+                .build();
+    }
 }

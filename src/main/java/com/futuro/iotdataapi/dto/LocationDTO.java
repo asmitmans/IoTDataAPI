@@ -1,5 +1,7 @@
 package com.futuro.iotdataapi.dto;
 
+import java.util.Map;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -11,5 +13,5 @@ public class LocationDTO {
     private String locationName;
     private String locationCountry;
     private String locationCity;
-    private String locationMeta;
+    private Map<String, Object> locationMeta;
 }

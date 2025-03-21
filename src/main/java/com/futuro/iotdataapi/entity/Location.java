@@ -1,5 +1,11 @@
 package com.futuro.iotdataapi.entity;
 
+import java.util.Map;
+
+import org.hibernate.annotations.Type;
+
+import com.vladmihalcea.hibernate.type.json.JsonType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -31,15 +37,16 @@ public class Location {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
-    @Column(name = "location_name", nullable = false, length = 255)
+    @Column(name = "location_name", nullable = false, length = 100)
     private String locationName;
 
-    @Column(name = "location_country", length = 255)
+    @Column(name = "location_country", length = 50)
     private String locationCountry;
 
-    @Column(name = "location_city", length = 255)
+    @Column(name = "location_city", length = 50)
     private String locationCity;
 
-    @Column(name = "location_meta", length = 255)
-    private String locationMeta;
+    @Type(JsonType.class)
+    @Column(name = "location_meta", columnDefinition = "jsonb")
+    private Map<String, Object> locationMeta;
 }

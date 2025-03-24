@@ -52,6 +52,52 @@ VALUES (
     (SELECT id FROM users WHERE username = 'admin'), 
     (SELECT id FROM roles WHERE name = 'ADMIN')
 ) ON CONFLICT DO NOTHING;
+
+-- Tabla company
+CREATE TABLE company (
+    id SERIAL PRIMARY KEY,
+    company_name VARCHAR(100) UNIQUE NOT NULL,
+    company_api_key VARCHAR(255) UNIQUE NOT NULL
+);
+
+-- Tabla location
+CREATE TABLE location (
+    id SERIAL PRIMARY KEY,
+    company_id INT REFERENCES company(id) ON DELETE CASCADE,
+    location_name VARCHAR(100) NOT NULL,
+    location_country VARCHAR(50),
+    location_city VARCHAR(50),
+    location_meta JSONB DEFAULT '{}'
+);
+
+-- Tabla sensor_model
+CREATE TABLE sensor_model (
+    id SERIAL PRIMARY KEY,
+    company_id INT REFERENCES company(id) ON DELETE CASCADE,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    category VARCHAR(50) NOT NULL
+);
+
+-- Tabla sensor
+CREATE TABLE sensor (
+    id SERIAL PRIMARY KEY,
+    location_id INT REFERENCES location(id) ON DELETE CASCADE,
+    model_id INT REFERENCES sensor_model(id) ON DELETE SET NULL,
+    sensor_name VARCHAR(100) NOT NULL,
+    sensor_api_key VARCHAR(255) UNIQUE NOT NULL,
+    sensor_meta JSONB DEFAULT '{}'
+);
+
+-- Tabla sensor_data:
+CREATE TABLE sensor_data (
+    id SERIAL PRIMARY KEY,
+    sensor_id INT REFERENCES sensor(id) ON DELETE CASCADE,
+    timestamp BIGINT NOT NULL,
+    value_name VARCHAR(50) NOT NULL,
+    value_unit VARCHAR(20) NOT NULL,
+    value DOUBLE PRECISION NOT NULL
+);
+
 ```
 
 ## Nota sobre la seguridad de la contraseña del usuario `admin`
@@ -105,5 +151,4 @@ Para configurar la conexión, sigue estos pasos:
 - Usar el token devuelto en el login para acceder a recursos protegidos.
 
 ---
-
 

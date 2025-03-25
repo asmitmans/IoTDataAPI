@@ -2,6 +2,9 @@ package com.futuro.iotdataapi.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "sensor")
@@ -26,6 +29,10 @@ public class Sensor {
     @Column(name = "sensor_api_key", nullable = false, unique = true, length = 255)
     private String sensorApiKey;
 
+    @Column(name = "sensor_category")
+    private String category; // categoria es opcional
+
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "sensor_meta", columnDefinition = "jsonb")
     private String sensorMeta;
 }

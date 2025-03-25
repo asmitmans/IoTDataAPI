@@ -1,6 +1,8 @@
 package com.futuro.iotdataapi.config;
 
 import com.futuro.iotdataapi.config.filter.JwtTokenValidator;
+import com.futuro.iotdataapi.config.filter.CompanyApiKeyAuthFilter;
+import com.futuro.iotdataapi.repository.CompanyRepository;
 import com.futuro.iotdataapi.service.UserDetailsServiceImpl;
 import com.futuro.iotdataapi.util.JwtUtils;
 import org.springframework.context.annotation.Bean;
@@ -20,10 +22,12 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtUtils jwtUtils;
+    private final CompanyRepository companyRepository;
 
-    public SecurityConfig(UserDetailsServiceImpl userDetailsService, JwtUtils jwtUtils) {
+    public SecurityConfig(UserDetailsServiceImpl userDetailsService, JwtUtils jwtUtils, CompanyRepository companyRepository) {
         this.userDetailsService = userDetailsService;
         this.jwtUtils = jwtUtils;
+        this.companyRepository = companyRepository;
     }
 
     @Bean
@@ -37,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/locations/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(new CompanyApiKeyAuthFilter(companyRepository), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtTokenValidator(jwtUtils), UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(form -> form.disable());

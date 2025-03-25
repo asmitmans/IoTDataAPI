@@ -80,12 +80,13 @@ CREATE TABLE sensor (
 );
 
 -- Tabla sensor_data
-CREATE TABLE sensor_data (
+CREATE TABLE sensor (
     id SERIAL PRIMARY KEY,
-    sensor_id INT REFERENCES sensor(id) ON DELETE CASCADE,
-    timestamp BIGINT NOT NULL,
-    value_name VARCHAR(50) NOT NULL,
-    value DOUBLE PRECISION NOT NULL
+    location_id INT REFERENCES location(id) ON DELETE CASCADE,
+    sensor_name VARCHAR(100) NOT NULL,
+    sensor_category VARCHAR(50),
+    sensor_api_key VARCHAR(255) UNIQUE NOT NULL,
+    sensor_meta JSONB DEFAULT '{}'
 );
 
 ```

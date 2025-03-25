@@ -20,10 +20,6 @@ public class Sensor {
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
 
-    @ManyToOne
-    @JoinColumn(name = "model_id")
-    private SensorModel model;
-
     @Column(name = "sensor_name", nullable = false, length = 100)
     private String sensorName;
 

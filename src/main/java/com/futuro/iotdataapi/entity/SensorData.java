@@ -16,15 +16,16 @@ public class SensorData {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(optional = false)
     @JoinColumn(name = "sensor_id", nullable = false)
     private Sensor sensor;
 
+    @Column(nullable = false)
     private Long timestamp;
 
+    @Column(name = "value_name", nullable = false, length = 50)
     private String valueName;
 
-    private String valueUnit;
-
+    @Column(nullable = false)
     private Double value;
 }

@@ -9,6 +9,6 @@ public class CompanyRequestDTO {
     @NotNull(message = "El nombre de la compañía es obligatorio")
     private String companyName;
 
-    @NotNull(message = "El API Key de la compañía es obligatorio")
+    //@NotNull(message = "El API Key de la compañía es obligatorio")
     private String companyApiKey;
 }

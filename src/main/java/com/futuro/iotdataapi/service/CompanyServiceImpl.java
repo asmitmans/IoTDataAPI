@@ -2,6 +2,7 @@ package com.futuro.iotdataapi.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -31,9 +32,18 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public CompanyDTO save(CompanyRequestDTO request) {
+    	
+    	String  uuid = "";
+    	Company c = null;
+    	
+    	do {
+    		uuid = UUID.randomUUID().toString();
+    		c = companyRepository.findByCompanyApiKey(uuid).orElse(null);
+    	} while(c != null);    	
+    	
         Company company = Company.builder()
                 .companyName(request.getCompanyName())
-                .companyApiKey(request.getCompanyApiKey())
+                .companyApiKey(uuid)
                 .build();
         return toDTO(companyRepository.save(company));
     }

@@ -7,6 +7,7 @@ import com.futuro.iotdataapi.service.UserDetailsServiceImpl;
 import com.futuro.iotdataapi.util.JwtUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -39,6 +40,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login/**").permitAll()
                         .requestMatchers("/api/companies/**").hasRole("ADMIN")
                         .requestMatchers("/api/locations/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/sensors/**").hasRole("COMPANY")
+                        .requestMatchers(HttpMethod.GET,"/api/v1/sensor_data").hasRole("COMPANY")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/sensor_data").hasRole("SENSOR")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new CompanyApiKeyAuthFilter(companyRepository), UsernamePasswordAuthenticationFilter.class)

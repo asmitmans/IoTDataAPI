@@ -143,3 +143,26 @@ Para configurar la conexión, sigue estos pasos:
 
 ---
 
+Perfecto, aquí tienes el resumen solicitado en formato de tabla clara y profesional:
+
+---
+
+## Permisos, Seguridad y Endpoints
+
+| **Agente**   | **Seguridad**                          | **Puede hacer**                                                                 | **Endpoint(s)**                                 |
+|--------------|----------------------------------------|----------------------------------------------------------------------------------|-------------------------------------------------|
+| **ADMIN**    | JWT (username + password)              | - Crear/editar/eliminar compañías, ubicaciones, usuarios y sensores            | `/api/companies/**`<br>`/api/locations/**`<br>`/api/users/**`<br>`/api/sensors/**` |
+| **COMPANY**  | `company_api_key` (en `Authorization`) | - Registrar sensores<br>- Consultar datos históricos de sensores propios        | `POST /api/sensors`<br>`GET /api/v1/sensor_data` |
+| **SENSOR**   | `sensor_api_key` (en `Authorization`)  | - Subir datos desde el sensor (una o múltiples muestras en lote)               | `POST /api/v1/sensor_data`                      |
+
+---
+
+### Notas de Seguridad
+
+- Todos los endpoints están protegidos según el tipo de agente.
+- Las *company_api_key* y *sensor_api_key* son generadas automáticamente.
+- **HTTPS es obligatorio** para producción.  
+  Asegura confidencialidad y evita exposición de los tokens.
+
+---
+---

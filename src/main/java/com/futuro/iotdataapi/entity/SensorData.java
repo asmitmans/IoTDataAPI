@@ -26,6 +26,9 @@ public class SensorData {
     @Column(name = "value_name", nullable = false, length = 50)
     private String valueName;
 
+    @Column(name = "value_unit", nullable = false, length = 20)
+    private String valueUnit;
+
     @Column(nullable = false)
     private Double value;
 }

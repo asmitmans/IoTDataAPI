@@ -75,18 +75,19 @@ CREATE TABLE sensor (
     id SERIAL PRIMARY KEY,
     location_id INT REFERENCES location(id) ON DELETE CASCADE,
     sensor_name VARCHAR(100) NOT NULL,
+    sensor_category VARCHAR(50),
     sensor_api_key VARCHAR(255) UNIQUE NOT NULL,
     sensor_meta JSONB DEFAULT '{}'
 );
 
 -- Tabla sensor_data
-CREATE TABLE sensor (
+CREATE TABLE sensor_data (
     id SERIAL PRIMARY KEY,
-    location_id INT REFERENCES location(id) ON DELETE CASCADE,
-    sensor_name VARCHAR(100) NOT NULL,
-    sensor_category VARCHAR(50),
-    sensor_api_key VARCHAR(255) UNIQUE NOT NULL,
-    sensor_meta JSONB DEFAULT '{}'
+    sensor_id INT REFERENCES sensor(id) ON DELETE CASCADE,
+    timestamp BIGINT NOT NULL,
+    value_name VARCHAR(50) NOT NULL,
+    value_unit VARCHAR(20) NOT NULL,
+    value DOUBLE PRECISION NOT NULL
 );
 
 ```

@@ -2,7 +2,9 @@ package com.futuro.iotdataapi.config;
 
 import com.futuro.iotdataapi.config.filter.JwtTokenValidator;
 import com.futuro.iotdataapi.config.filter.CompanyApiKeyAuthFilter;
+import com.futuro.iotdataapi.config.filter.SensorApiKeyAuthFilter;
 import com.futuro.iotdataapi.repository.CompanyRepository;
+import com.futuro.iotdataapi.repository.SensorRepository;
 import com.futuro.iotdataapi.service.UserDetailsServiceImpl;
 import com.futuro.iotdataapi.util.JwtUtils;
 import org.springframework.context.annotation.Bean;
@@ -24,11 +26,17 @@ public class SecurityConfig {
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtUtils jwtUtils;
     private final CompanyRepository companyRepository;
+    private final SensorRepository sensorRepository;
 
-    public SecurityConfig(UserDetailsServiceImpl userDetailsService, JwtUtils jwtUtils, CompanyRepository companyRepository) {
+    public SecurityConfig(UserDetailsServiceImpl userDetailsService,
+                          JwtUtils jwtUtils,
+                          CompanyRepository companyRepository,
+                          SensorRepository sensorRepository) {
+
         this.userDetailsService = userDetailsService;
         this.jwtUtils = jwtUtils;
         this.companyRepository = companyRepository;
+        this.sensorRepository = sensorRepository;
     }
 
     @Bean
@@ -46,6 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/sensor_data").hasRole("SENSOR")
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(new SensorApiKeyAuthFilter(sensorRepository), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new CompanyApiKeyAuthFilter(companyRepository), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtTokenValidator(jwtUtils), UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(httpBasic -> httpBasic.disable())

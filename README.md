@@ -124,29 +124,6 @@ Para configurar la conexión, sigue estos pasos:
 
 ---
 
-### Endpoints de Autenticación y Acceso
-
-- **`POST /api/auth/login`** → Inicia sesión y devuelve un **JWT**.
-   - Enviar `username` y `password` en el **body** (JSON).
-   - Respuesta: `{ "accessToken": "JWT_TOKEN" }`.
-
-- **`GET /api/companies`** → Devuelve la lista de compañías (requiere autenticación).
-   - Incluir el **JWT** en el header:
-     ```http
-     Authorization: Bearer JWT_TOKEN
-     ```
-   - Respuesta: `200 OK` si el usuario tiene `ROLE_ADMIN`.
-
-**Notas:**
-- Todos los endpoints protegidos requieren autenticación vía **JWT**.
-- Usar el token devuelto en el login para acceder a recursos protegidos.
-
----
-
-Perfecto, aquí tienes el resumen solicitado en formato de tabla clara y profesional:
-
----
-
 ## Permisos, Seguridad y Endpoints
 
 | **Agente**   | **Seguridad**                          | **Puede hacer**                                                                 | **Endpoint(s)**                                 |
@@ -157,12 +134,23 @@ Perfecto, aquí tienes el resumen solicitado en formato de tabla clara y profesi
 
 ---
 
-### Notas de Seguridad
+### Tabla resumen de endpoints implementados
 
-- Todos los endpoints están protegidos según el tipo de agente.
-- Las *company_api_key* y *sensor_api_key* son generadas automáticamente.
-- **HTTPS es obligatorio** para producción.  
-  Asegura confidencialidad y evita exposición de los tokens.
+| Endpoint                        | Método   | Autenticación             | Rol requerido | Descripción                                                                 |
+|--------------------------------|----------|----------------------------|---------------|-----------------------------------------------------------------------------|
+| `/api/auth/login`              | POST     | Ninguna                   | N/A           | Iniciar sesión con credenciales de usuario (`username/password`)           |
+| `/api/companies/**`            | Todos    | JWT (Authorization)       | `ROLE_ADMIN`  | CRUD completo de compañías                                                  |
+| `/api/locations/**`            | Todos    | JWT (Authorization)       | `ROLE_ADMIN`  | CRUD completo de ubicaciones                                                |
+| `/api/sensors`                 | POST     | ApiKey (en Header)        | `ROLE_COMPANY`| Registrar nuevo sensor. Requiere `company_api_key` en header `Authorization`|
+| `/api/v1/sensor_data`          | POST     | ApiKey (en Header + Body) | `ROLE_SENSOR` | Subir uno o varios registros de datos del sensor. Requiere `sensor_api_key`|
 
 ---
+
+### Notas importantes de seguridad
+
+- **Todos los endpoints protegidos deben ser accedidos vía HTTPS en producción.**
+- **Los sensores y compañías no usan JWT.** Se autentican con sus claves API en headers (`Authorization: ApiKey <clave>`).
+- El header **`Authorization`** se interpreta por filtros personalizados (`CompanyApiKeyAuthFilter` y `SensorApiKeyAuthFilter`).
+- **Sensores deben incluir `sensor_api_key` en header y en body.** Se valida que coincidan.
+
 ---

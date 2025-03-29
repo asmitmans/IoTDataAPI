@@ -86,7 +86,6 @@ CREATE TABLE sensor_data (
     sensor_id INT REFERENCES sensor(id) ON DELETE CASCADE,
     timestamp BIGINT NOT NULL,
     value_name VARCHAR(50) NOT NULL,
-    value_unit VARCHAR(20) NOT NULL,
     value DOUBLE PRECISION NOT NULL
 );
 

@@ -1,6 +1,7 @@
 package com.futuro.iotdataapi.controller;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,7 +42,7 @@ public class SensorController {
     
     @GetMapping("/location/{id}")
     public ResponseEntity<Page<SensorResponse>> findAllByLocationId(
-    		@RequestHeader("Authorization") String authorization, 
+    		@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, 
     		@PathVariable Integer id,
     		@RequestParam("page") int pageIndex,
 			@RequestParam(value = "size", required = false, 

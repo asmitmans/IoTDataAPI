@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/sensor_data").hasRole("SENSOR")
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new SensorApiKeyAuthFilter(sensorRepository), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new SensorApiKeyAuthFilter(sensorRepository, companyRepository), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new CompanyApiKeyAuthFilter(companyRepository), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtTokenValidator(jwtUtils), UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(httpBasic -> httpBasic.disable())

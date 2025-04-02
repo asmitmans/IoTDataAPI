@@ -2,8 +2,11 @@ package com.futuro.iotdataapi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.futuro.iotdataapi.dto.CompanyDTO;
+import com.futuro.iotdataapi.dto.LocationDTO;
 import com.futuro.iotdataapi.dto.SensorRegisterRequest;
 import com.futuro.iotdataapi.dto.SensorRegisterResponse;
+import com.futuro.iotdataapi.dto.SensorResponse;
 import com.futuro.iotdataapi.entity.Company;
 import com.futuro.iotdataapi.entity.Location;
 import com.futuro.iotdataapi.entity.Sensor;
@@ -11,6 +14,10 @@ import com.futuro.iotdataapi.repository.CompanyRepository;
 import com.futuro.iotdataapi.repository.LocationRepository;
 import com.futuro.iotdataapi.repository.SensorRepository;
 import jakarta.transaction.Transactional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -77,6 +84,50 @@ public class SensorServiceImpl implements SensorService {
             throw new RuntimeException("Missing or malformed Authorization header");
         }
         return rawAuthorization.replace("ApiKey ", "").trim();
+    }
+
+    @Override
+    public Page<SensorResponse> findAllByLocationIdPageable(String rawAuthorization, Integer id, int pageIndex, int pageSize) {
+        String companyApiKey = extractApiKey(rawAuthorization);
+
+        Company company = companyRepository.findByCompanyApiKey(companyApiKey)
+                .orElseThrow(() -> new RuntimeException("Company not found or unauthorized"));
+
+        Location location = locationRepository.findById(id)
+                .filter(loc -> loc.getCompany().getId().intValue() == company.getId().intValue())
+                .orElseThrow(() -> new RuntimeException("Invalid location for this company"));
+
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+        Page<Sensor> pages = sensorRepository.findByLocationId(location.getId(), pageable);
+
+        return pages.map(this::toDTO);
+    }
+
+	
+	private SensorResponse toDTO(Sensor sensor) {
+    	CompanyDTO companyDto = CompanyDTO.builder()
+    								.id(sensor.getLocation().getCompany().getId())
+    								.companyName(sensor.getLocation().getCompany().getCompanyName())
+    								.companyApiKey(sensor.getLocation().getCompany().getCompanyApiKey())
+    								.build();
+    	LocationDTO locationDto = LocationDTO.builder()
+        .id(sensor.getLocation().getId())
+        .company(companyDto)
+        .locationName(sensor.getLocation().getLocationName())
+        .locationCountry(sensor.getLocation().getLocationCountry())
+        .locationCity(sensor.getLocation().getLocationCity())
+        .locationMeta(sensor.getLocation().getLocationMeta())
+        .build();
+    	
+    	
+        return SensorResponse.builder()
+                .id(sensor.getId())
+                .sensorName(sensor.getSensorName())
+                .sensorCategory(sensor.getCategory())
+                .sensorApiKey(sensor.getSensorApiKey())
+                .location(locationDto)
+                .build();
     }
 
 }

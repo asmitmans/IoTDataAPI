@@ -1,15 +1,28 @@
 package com.futuro.iotdataapi.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.futuro.iotdataapi.dto.SensorRegisterRequest;
 import com.futuro.iotdataapi.dto.SensorRegisterResponse;
+import com.futuro.iotdataapi.dto.SensorResponse;
 import com.futuro.iotdataapi.service.SensorService;
+
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/sensors")
 public class SensorController {
+	
+	private static final String PAGE_DEFAULT_SIZE = "7";
 
     private final SensorService sensorService;
 
@@ -25,4 +38,18 @@ public class SensorController {
         SensorRegisterResponse response = sensorService.registerSensor(request, authorization);
         return ResponseEntity.ok(response);
     }
+    
+    @GetMapping("/location/{id}")
+    public ResponseEntity<Page<SensorResponse>> findAllByLocationId(
+    		@RequestHeader("Authorization") String authorization, 
+    		@PathVariable Integer id,
+    		@RequestParam("page") int pageIndex,
+			@RequestParam(value = "size", required = false, 
+			defaultValue = PAGE_DEFAULT_SIZE) int pageSize) {
+    	
+    	Page<SensorResponse> pageDto = sensorService.findAllByLocationIdPageable(authorization, id, pageIndex, pageSize);
+
+		return ResponseEntity.ok(pageDto);
+    }
+    
 }

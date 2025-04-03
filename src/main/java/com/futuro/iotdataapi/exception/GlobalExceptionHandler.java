@@ -30,6 +30,18 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
+    
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ExceptionResponse> handleUnauthorizedException(Exception ex) {
+        ExceptionResponse response = new ExceptionResponse(
+                new Date(),
+                "Could not execute",
+                ex.getMessage(),
+                HttpStatus.UNAUTHORIZED.value()
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
 
     // Errores generales
     @ExceptionHandler(Exception.class)

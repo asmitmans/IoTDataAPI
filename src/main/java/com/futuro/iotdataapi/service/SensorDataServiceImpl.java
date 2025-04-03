@@ -16,6 +16,7 @@ import com.futuro.iotdataapi.dto.SensorResponse;
 import com.futuro.iotdataapi.entity.Company;
 import com.futuro.iotdataapi.entity.Sensor;
 import com.futuro.iotdataapi.entity.SensorData;
+import com.futuro.iotdataapi.exception.UnauthorizedException;
 import com.futuro.iotdataapi.repository.CompanyRepository;
 import com.futuro.iotdataapi.repository.SensorDataRepository;
 import com.futuro.iotdataapi.repository.SensorRepository;
@@ -109,7 +110,22 @@ public class SensorDataServiceImpl implements SensorDataService {
 		String companyApiKey = extractApiKey(rawAuthorization);
 
         Company company = companyRepository.findByCompanyApiKey(companyApiKey)
-                .orElseThrow(() -> new RuntimeException("Company not found or unauthorized"));
+                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+        
+        List<Sensor> sensors = sensorRepository.findAllById(sensorIds);
+        
+        if (sensors.size() != sensorIds.size()) {
+        	throw new IllegalArgumentException("Data cannot be delivered");
+        }
+        
+        boolean allSensorsOk = sensors.stream()
+                .allMatch(sensor -> sensor.getLocation() != null &&
+                                    sensor.getLocation().getCompany() != null &&
+                                    sensor.getLocation().getCompany().getId().equals(company.getId()));
+
+        if (!allSensorsOk) {
+        	throw new IllegalArgumentException("Data cannot be delivered");
+        }
 		
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
 

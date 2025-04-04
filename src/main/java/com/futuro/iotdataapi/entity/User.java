@@ -27,6 +27,15 @@ public class User {
 
     @Column(nullable = false)
     private boolean enabled;
+    
+    @Column(nullable = true, length = 100)
+    private String names;
+    
+    @Column(nullable = true, length = 100)
+    private String surnames;
+    
+    @Column(nullable = true, length = 20)
+    private String alias;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -34,6 +43,6 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
+    @Builder.Default
     private Set<Role> roles = new HashSet<>();
-
 }

@@ -4,8 +4,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.futuro.iotdataapi.dto.CompanyDTO;
 import com.futuro.iotdataapi.dto.LocationDTO;
 import com.futuro.iotdataapi.dto.LocationRequestDTO;
 import com.futuro.iotdataapi.entity.Company;
@@ -67,11 +71,28 @@ public class LocationServiceImpl implements LocationService {
     public void delete(Integer id) {
         locationRepository.deleteById(id);
     }
+	
+	@Override
+	public Page<LocationDTO> findAllPageable(int pageIndex, int pageSize) {
+
+		Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+		Page<Location> pages = locationRepository.findAll(pageable);
+		
+		return pages.map(this::toDTO);
+
+	}
 
     private LocationDTO toDTO(Location location) {
+    	CompanyDTO companyDto = CompanyDTO.builder()
+    								.id(location.getCompany().getId())
+    								.companyName(location.getCompany().getCompanyName())
+    								.companyApiKey(location.getCompany().getCompanyApiKey())
+    								.build();
+    	
         return LocationDTO.builder()
                 .id(location.getId())
-                .companyId(location.getCompany().getId())
+                .company(companyDto)
                 .locationName(location.getLocationName())
                 .locationCountry(location.getLocationCountry())
                 .locationCity(location.getLocationCity())

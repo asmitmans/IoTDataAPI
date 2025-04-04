@@ -1,28 +1,36 @@
 package com.futuro.iotdataapi.service;
 
-import com.futuro.iotdataapi.dto.SensorDataUploadRequest;
-import com.futuro.iotdataapi.dto.SensorDataUploadResponse;
-import com.futuro.iotdataapi.entity.Sensor;
-import com.futuro.iotdataapi.entity.SensorData;
-import com.futuro.iotdataapi.repository.SensorDataRepository;
-import com.futuro.iotdataapi.repository.SensorRepository;
-import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import com.futuro.iotdataapi.dto.SensorDataResponse;
+import com.futuro.iotdataapi.dto.SensorDataUploadRequest;
+import com.futuro.iotdataapi.dto.SensorDataUploadResponse;
+import com.futuro.iotdataapi.dto.SensorResponse;
+import com.futuro.iotdataapi.entity.Company;
+import com.futuro.iotdataapi.entity.Sensor;
+import com.futuro.iotdataapi.entity.SensorData;
+import com.futuro.iotdataapi.exception.UnauthorizedException;
+import com.futuro.iotdataapi.repository.CompanyRepository;
+import com.futuro.iotdataapi.repository.SensorDataRepository;
+import com.futuro.iotdataapi.repository.SensorRepository;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class SensorDataServiceImpl implements SensorDataService {
 
     private final SensorRepository sensorRepository;
     private final SensorDataRepository sensorDataRepository;
-
-    public SensorDataServiceImpl(SensorRepository sensorRepository, SensorDataRepository sensorDataRepository) {
-        this.sensorRepository = sensorRepository;
-        this.sensorDataRepository = sensorDataRepository;
-    }
+    private final CompanyRepository companyRepository;
 
     @Override
     @Transactional
@@ -94,4 +102,57 @@ public class SensorDataServiceImpl implements SensorDataService {
             throw new IllegalArgumentException("El campo '" + fieldName + "' debe ser un número.");
         }
     }
+
+	@Override
+	public Page<SensorDataResponse> findAllByLocationIdPageable(String rawAuthorization, long fromEpoch, long toEpoch,
+			List<Integer> sensorIds, int pageIndex, int pageSize) {
+		
+		String companyApiKey = extractApiKey(rawAuthorization);
+
+        Company company = companyRepository.findByCompanyApiKey(companyApiKey)
+                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+        
+        List<Sensor> sensors = sensorRepository.findAllById(sensorIds);
+        
+        if (sensors.size() != sensorIds.size()) {
+        	throw new IllegalArgumentException("Data cannot be delivered");
+        }
+        
+        boolean allSensorsOk = sensors.stream()
+                .allMatch(sensor -> sensor.getLocation() != null &&
+                                    sensor.getLocation().getCompany() != null &&
+                                    sensor.getLocation().getCompany().getId().equals(company.getId()));
+
+        if (!allSensorsOk) {
+        	throw new IllegalArgumentException("Data cannot be delivered");
+        }
+		
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+        Page<SensorData> pages = sensorDataRepository.findAllBySensorIdAndTimestampBetween(
+                sensorIds, fromEpoch, toEpoch, pageable);
+
+        return pages.map(this::toDTO);
+	}
+	
+	public SensorDataResponse toDTO(SensorData sensorData) {
+	    return SensorDataResponse.builder()
+	            .id(sensorData.getId())
+	            .sensor(toSensorResponse(sensorData.getSensor()))
+	            .timestamp(sensorData.getTimestamp())
+	            .valueName(sensorData.getValueName())
+	            .value(sensorData.getValue())
+	            .build();
+	}
+
+	public SensorResponse toSensorResponse(Sensor sensor) {
+	    return SensorResponse.builder()
+	            .id(sensor.getId())
+	            .sensorName(sensor.getSensorName())
+	            .sensorCategory(sensor.getCategory())
+	            .sensorApiKey(sensor.getSensorApiKey())
+	            //.sensorMeta(sensor.getSensorMeta())
+	            .build();
+	}
+
 }

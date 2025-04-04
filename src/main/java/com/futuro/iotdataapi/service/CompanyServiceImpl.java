@@ -5,6 +5,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.futuro.iotdataapi.dto.CompanyDTO;
@@ -62,6 +65,18 @@ public class CompanyServiceImpl implements CompanyService {
     public void delete(Integer id) {
         companyRepository.deleteById(id);
     }
+    
+    @Override
+	public Page<CompanyDTO> findAllPageable(int pageIndex, int pageSize) {
+
+		Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+		Page<Company> pages = companyRepository.findAll(pageable);
+
+		
+		return pages.map(this::toDTO);
+
+	}
 
     private CompanyDTO toDTO(Company company) {
         return CompanyDTO.builder()

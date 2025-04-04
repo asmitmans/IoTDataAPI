@@ -29,6 +29,6 @@ public class Company {
     @Column(name = "company_name", nullable = false, length = 100)
     private String companyName;
 
-    @Column(name = "company_api_key", nullable = false, length = 255)
+    @Column(name = "company_api_key", nullable = false, unique = true, length = 255)
     private String companyApiKey;
 }

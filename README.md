@@ -154,3 +154,48 @@ Para configurar la conexión, sigue estos pasos:
 - **Sensores deben incluir `sensor_api_key` en header y en body.** Se valida que coincidan.
 
 ---
+
+## HTTPS en desarrollo
+
+### Paso 1: Generar un certificado autofirmado
+
+Ejecuta este comando en terminal (modo no interactivo):  
+```bash
+keytool -genkeypair \
+  -alias iot-api-cert \
+  -keyalg RSA -keysize 2048 \
+  -storetype PKCS12 \
+  -keystore keystore.p12 \
+  -validity 365 \
+  -storepass password \
+  -dname "CN=localhost, OU=Dev, O=Futuro, L=Santiago, S=RM, C=CL"
+```  
+Esto genera un archivo `keystore.p12` que puedes poner en `src/main/resources/`.
+
+### Paso 2: Configurar el archivo `application.properties`
+
+```properties
+server.port=8443
+server.ssl.key-store=classpath:keystore.p12
+server.ssl.key-store-password=password
+server.ssl.key-store-type=PKCS12
+server.ssl.key-alias=iot-api-cert
+```
+---
+
+### Notas importantes
+
+- Todos los endpoints ahora están disponibles en:  
+  `https://localhost:8443/`
+
+- En herramientas como **Insomnia** o **Postman**, asegúrate de:
+   - Usar `https://` en las URLs.
+   - Desactivar la verificación estricta de SSL si da error (opcional para desarrollo).
+
+- En producción:
+   - El puerto debe ser `443`.
+   - Se debe reemplazar el certificado autofirmado por uno válido (ej: Let's 
+     Encrypt o CA oficial).
+   - Idealmente, se usa un **proxy inverso** como Nginx.
+
+---

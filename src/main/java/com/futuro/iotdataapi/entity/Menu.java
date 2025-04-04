@@ -32,14 +32,14 @@ public class Menu {
 	private Integer idMenu;
 
 	@Nonnull
-	@Column(name = "id_padre")
-	private Integer idPadre;
+	@Column(name = "id_father")
+	private Integer idFather;
 
-	@Column(name = "padre_descripcion", nullable = false, length = 20)
-	private String padreDescripcion;
+	@Column(name = "father_name", nullable = false, length = 20)
+	private String fatherName;
 
-	@Column(name = "item_descripcion", nullable = false, length = 25)
-	private String itemDescripcion;
+	@Column(name = "item_name", nullable = false, length = 25)
+	private String itemName;
 
 	@Column(name = "icon", nullable = false, length = 100)
 	private String icon;

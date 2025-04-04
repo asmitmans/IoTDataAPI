@@ -16,7 +16,7 @@ import lombok.Setter;
 public class MenuModelDto {
 
 	@JsonIgnore
-	private Integer idPadre;
+	private Integer idFather;
 	private String label;
 	private String icon;
 	private List<MenuItemDto> items;

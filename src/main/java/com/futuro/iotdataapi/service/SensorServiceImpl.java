@@ -71,12 +71,11 @@ public class SensorServiceImpl implements SensorService {
 
         Sensor savedSensor = sensorRepository.save(sensor);
 
-        return new SensorRegisterResponse(
-                savedSensor.getId(),
-                savedSensor.getSensorApiKey(),
-                savedSensor.getSensorName()
-        );
-
+        return SensorRegisterResponse.builder()
+                .id(savedSensor.getId())
+                .message(savedSensor.getSensorName())
+                .sensorApiKey(savedSensor.getSensorApiKey())
+                .build();
     }
 
     private String extractApiKey(String rawAuthorization) {

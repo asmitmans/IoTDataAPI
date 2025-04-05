@@ -1,5 +1,6 @@
 package com.futuro.iotdataapi.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -11,6 +12,7 @@ import java.util.Map;
 @Data
 public class SensorDataUploadRequest {
 
+    @JsonProperty("api_key")
     @NotBlank
     private String sensor_api_key;
 

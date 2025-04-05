@@ -47,3 +47,5 @@ application.yml
 
 # Dependencias de Maven
 .mvn/
+
+keystore.p12

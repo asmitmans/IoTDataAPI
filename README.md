@@ -89,35 +89,6 @@ spring.datasource.password=clave
 
 ---
 
-## HTTPS en desarrollo
-
-### Paso 1: Generar certificado autofirmado
-
-```bash
-keytool -genkeypair \
-  -alias iot-api-cert \
-  -keyalg RSA -keysize 2048 \
-  -storetype PKCS12 \
-  -keystore keystore.p12 \
-  -validity 365 \
-  -storepass password \
-  -dname "CN=localhost, OU=Dev, O=Futuro, L=Santiago, S=RM, C=CL"
-```
-
-Guarda `keystore.p12` en `src/main/resources/`.
-
-### Paso 2: Configurar `application.properties`
-
-```properties
-server.port=8443
-server.ssl.key-store=classpath:keystore.p12
-server.ssl.key-store-password=password
-server.ssl.key-store-type=PKCS12
-server.ssl.key-alias=iot-api-cert
-```
-
----
-
 ## Notas para desarrolladores
 
 Si agregas una nueva clase `@Entity`, **debes actualizar el script de base de datos** 

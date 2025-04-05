@@ -190,12 +190,9 @@ Authorization: ApiKey <sensor_api_key>
 ## Entornos y rutas base
 
 - **Desarrollo:**  
-  Usar la ruta base `https://localhost:8443`  
-  (requiere que el backend esté ejecutándose con certificado autofirmado)
-
+  Usar la ruta base `https://localhost:8080`  
+  
 - **Producción:**  
   Usar `https://<ip_publica>` o dominio configurado (si aplica)
-
-> Asegúrate de usar `https://` en ambos entornos, ya que todos los endpoints están protegidos por HTTPS.
 
 ---

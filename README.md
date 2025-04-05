@@ -58,6 +58,40 @@ spring.datasource.url=jdbc:postgresql://localhost:5432/iot_data_api
 spring.datasource.username=usuario
 spring.datasource.password=clave
 ```
+---
+
+## Preparación de la base de datos
+
+La creación completa del esquema se encuentra en:
+
+```bash
+/src/main/resources/create_iot_schema.sql
+```
+
+Este script incluye todas las tablas y datos necesarios para que la aplicación 
+funcione correctamente.
+
+---
+
+### Permisos requeridos para el usuario de la base de datos
+
+Una vez creada la base de datos, debes asignar los permisos necesarios al 
+usuario que la aplicación utilizará para conectarse.
+
+> Reemplaza `user_bd` por el nombre real de tu usuario PostgreSQL.
+
+```sql
+-- Asignar permisos al usuario de base de datos
+GRANT USAGE ON SCHEMA public TO user_bd;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO user_bd;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO user_bd;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO user_bd;
+```
+
+Esto asegura que la aplicación pueda leer y escribir correctamente sin requerir 
+permisos administrativos.
+
+---
 
 ## Permisos, seguridad y endpoints
 

@@ -42,26 +42,26 @@ public class MenuServiceImpl implements MenuService {
 
 			index += 5;
 
-			MenuModelItemDto padre = new MenuModelItemDto();
-			padre.setName(menuDto.getLabel().trim().toUpperCase());
-			padre.setPosition(index);
-			padre.setIcon(menuDto.getIconFury());
-			padre.setType(MenuTypeFuryEnum.SUBHEADING.getValue());
+			MenuModelItemDto father = new MenuModelItemDto();
+			father.setName(menuDto.getLabel().trim().toUpperCase());
+			father.setPosition(index);
+			father.setIcon(menuDto.getIconFury());
+			father.setType(MenuTypeFuryEnum.SUBHEADING.getValue());
 
-			menuItemList.add(padre);
+			menuItemList.add(father);
 
 			for (MenuItemDto itemDto : menuDto.getItems()) {
 
 				if (Optional.ofNullable(itemDto.getIconFury()).orElse("").trim().length() > 0) {
 					index++;
 
-					MenuModelItemDto hijo = new MenuModelItemDto();
-					hijo.setName(itemDto.getLabel().trim());
-					hijo.setPosition(index);
-					hijo.setIcon(itemDto.getIconFury());
-					hijo.setRouteOrFunction(itemDto.getRouterLink().get(0));
+					MenuModelItemDto item = new MenuModelItemDto();
+					item.setName(itemDto.getLabel().trim());
+					item.setPosition(index);
+					item.setIcon(itemDto.getIconFury());
+					item.setRouteOrFunction(itemDto.getRouterLink().get(0));
 
-					menuItemList.add(hijo);
+					menuItemList.add(item);
 				}
 			}
 		}
@@ -76,13 +76,13 @@ public class MenuServiceImpl implements MenuService {
 		List<MenuModelDto> menusDto = new ArrayList<>();
 
 		for (Menu menu : menus) {
-			int i = getPosicion(menu.getIdPadre(), menusDto);
+			int i = getPos(menu.getIdFather(), menusDto);
 			MenuModelDto model = null;
 			if (i < 0) {
 				model = new MenuModelDto();
-				model.setIdPadre(menu.getIdPadre());
+				model.setIdFather(menu.getIdFather());
 				model.setItems(new ArrayList<>());
-				model.setLabel(menu.getPadreDescripcion());
+				model.setLabel(menu.getFatherName());
 				model.setIconFury(menu.getIconFury());
 
 				menusDto.add(model);
@@ -98,7 +98,7 @@ public class MenuServiceImpl implements MenuService {
 
 	private MenuItemDto crearItem(Menu menu) {
 		MenuItemDto item = new MenuItemDto();
-		item.setLabel(menu.getItemDescripcion());
+		item.setLabel(menu.getItemName());
 		item.setIcon(menu.getIcon());
 		item.setRouterLink(new ArrayList<>());
 
@@ -109,32 +109,34 @@ public class MenuServiceImpl implements MenuService {
 		return item;
 	}
 
-	private int getPosicion(int idPadre, List<MenuModelDto> d) {
-		int posicion = -1;
-		boolean existe = false;
+	private int getPos(int idFather, List<MenuModelDto> listModels) {
+		int pos = -1;
+		boolean exist = false;
 
-		if (d != null && !d.isEmpty()) {
-			for (MenuModelDto model : d) {
-				posicion++;
-				if (idPadre == model.getIdPadre().intValue()) {
-					existe = true;
+		if (listModels != null && !listModels.isEmpty()) {
+			for (MenuModelDto model : listModels) {
+				pos++;
+				if (idFather == model.getIdFather().intValue()) {
+					exist = true;
 					break;
 				}
 			}
 		}
 
-		if (!existe) {
-			posicion = -1;
+		if (!exist) {
+			pos = -1;
 		}
 
-		return posicion;
+		return pos;
 	}
 
 	private MenuDto toDto(Menu menu) {
-		return MenuDto.builder().idMenu(menu.getIdMenu()).icon(menu.getIcon()).name(menu.getItemDescripcion())
+		return MenuDto.builder().
+				idMenu(menu.getIdMenu()).
+				icon(menu.getIcon()).
+				name(menu.getItemName())
 				.url(menu.getUrl())
-				.roles(menu.getRoles() != null ? menu.getRoles().stream().map(this::toDto).collect(Collectors.toList())
-						: null)
+				.roles(menu.getRoles() != null ? menu.getRoles().stream().map(this::toDto).collect(Collectors.toList())	: null)
 				.build();
 	}
 

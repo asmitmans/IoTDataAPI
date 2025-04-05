@@ -16,7 +16,7 @@ public interface MenuRepository extends JpaRepository<Menu, Integer> {
 			    inner join menu m on m.id_menu = mr.id_menu
 			    inner join users u on u.id = ur.user_id
 			    where u.username = :username
-			    order by id_padre,id_menu
+			    order by id_father,id_menu
 			""", nativeQuery = true)
 	List<Menu> getMenusByUsername(@Param("username") String username);
 

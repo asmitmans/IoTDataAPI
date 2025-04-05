@@ -190,7 +190,7 @@ Authorization: ApiKey <sensor_api_key>
 ## Entornos y rutas base
 
 - **Desarrollo:**  
-  Usar la ruta base `https://localhost:8080`  
+  Usar la ruta base `http://localhost:8080`  
   
 - **Producción:**  
   Usar `https://<ip_publica>` o dominio configurado (si aplica)

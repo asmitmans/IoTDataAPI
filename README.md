@@ -18,8 +18,9 @@ Asegúrate de tener PostgreSQL instalado y correctamente configurado.
 
 ### Script de creación de tablas
 Ejecuta el archivo SQL ubicado en:
+```bash:
 /src/main/create_iot_schema.sql
-
+```
 Este archivo contiene todas las sentencias `CREATE TABLE` necesarias para 
 el funcionamiento de la aplicación.
 
@@ -121,8 +122,9 @@ server.ssl.key-alias=iot-api-cert
 
 Si agregas una nueva clase `@Entity`, **debes actualizar el script de base de datos** 
 ubicado en:
+```bash:
 /src/main/create_iot_schema.sql
-
+```
 Esto es especialmente importante si se activa:
 
 ```properties

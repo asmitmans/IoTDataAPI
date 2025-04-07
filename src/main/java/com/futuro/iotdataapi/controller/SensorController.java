@@ -1,5 +1,7 @@
 package com.futuro.iotdataapi.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,7 @@ import jakarta.validation.Valid;
 public class SensorController {
 	
 	private static final String PAGE_DEFAULT_SIZE = "7";
+	private static final String LOCATION_DEFAULT = "-1";
 
     private final SensorService sensorService;
 
@@ -51,6 +54,15 @@ public class SensorController {
     	Page<SensorResponse> pageDto = sensorService.findAllByLocationIdPageable(authorization, id, pageIndex, pageSize);
 
 		return ResponseEntity.ok(pageDto);
+    }
+    
+    @GetMapping("/company/{companyId}")
+    public ResponseEntity<List<SensorResponse>> getAllSensors(
+    		@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, 
+    		@PathVariable Integer companyId,
+    		@RequestParam(value = "location", required = false, 
+			defaultValue = LOCATION_DEFAULT) int locationId) {
+        return ResponseEntity.ok(sensorService.getAllSensors(authorization, companyId, locationId));
     }
     
 }

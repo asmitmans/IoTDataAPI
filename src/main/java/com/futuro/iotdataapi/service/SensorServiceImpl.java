@@ -1,5 +1,15 @@
 package com.futuro.iotdataapi.service;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.futuro.iotdataapi.dto.CompanyDTO;
@@ -10,17 +20,12 @@ import com.futuro.iotdataapi.dto.SensorResponse;
 import com.futuro.iotdataapi.entity.Company;
 import com.futuro.iotdataapi.entity.Location;
 import com.futuro.iotdataapi.entity.Sensor;
+import com.futuro.iotdataapi.exception.UnauthorizedException;
 import com.futuro.iotdataapi.repository.CompanyRepository;
 import com.futuro.iotdataapi.repository.LocationRepository;
 import com.futuro.iotdataapi.repository.SensorRepository;
+
 import jakarta.transaction.Transactional;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 public class SensorServiceImpl implements SensorService {
@@ -91,11 +96,11 @@ public class SensorServiceImpl implements SensorService {
         String companyApiKey = extractApiKey(rawAuthorization);
 
         Company company = companyRepository.findByCompanyApiKey(companyApiKey)
-                .orElseThrow(() -> new RuntimeException("Company not found or unauthorized"));
+                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
 
         Location location = locationRepository.findById(id)
                 .filter(loc -> loc.getCompany().getId().intValue() == company.getId().intValue())
-                .orElseThrow(() -> new RuntimeException("Invalid location for this company"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
 
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
 
@@ -104,6 +109,35 @@ public class SensorServiceImpl implements SensorService {
         return pages.map(this::toDTO);
     }
 
+    @Override
+	public List<SensorResponse> getAllSensors(String rawAuthorization, Integer companyId, int locationId) {
+    	String companyApiKey = extractApiKey(rawAuthorization);
+    	
+    	Company company = companyRepository.findByCompanyApiKey(companyApiKey)
+                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    	
+    	if (company.getId().intValue() != companyId.intValue()) {
+    		throw new UnauthorizedException("Company not found or unauthorized");
+    	}
+
+    	List<Integer> locationIds;
+
+    	if (locationId == -1) {
+    	    locationIds = locationRepository.findAllByCompanyId(companyId)
+    	            .orElse(Collections.emptyList())
+    	            .stream()
+    	            .map(Location::getId)
+    	            .collect(Collectors.toList());
+    	} else {
+    	    Location location = locationRepository.findById(locationId)
+    	            .filter(loc -> loc.getCompany().getId().equals(company.getId()))
+    	            .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
+    	    
+    	    locationIds = Collections.singletonList(location.getId());
+    	}
+        
+		return sensorRepository.findByLocationIdIn(locationIds).stream().map(this::toDTO).toList();
+	}
 	
 	private SensorResponse toDTO(Sensor sensor) {
     	CompanyDTO companyDto = CompanyDTO.builder()

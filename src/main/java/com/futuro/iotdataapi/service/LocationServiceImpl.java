@@ -1,5 +1,6 @@
 package com.futuro.iotdataapi.service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,6 +36,15 @@ public class LocationServiceImpl implements LocationService {
     public Optional<LocationDTO> findById(Integer id) {
         return locationRepository.findById(id).map(this::toDTO);
     }
+	
+	@Override
+	public List<LocationDTO> findAllByCompanyId(Integer id) {
+		return locationRepository.findAllByCompanyId(id)
+								.orElse(Collections.emptyList())
+								.stream()
+								.map(this::toDTO)
+								.collect(Collectors.toList());
+	}
 
 	@Override
     public LocationDTO save(LocationRequestDTO request) {

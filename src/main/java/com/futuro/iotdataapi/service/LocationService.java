@@ -13,6 +13,8 @@ public interface LocationService {
 	public List<LocationDTO> findAll();
 
 	public Optional<LocationDTO> findById(Integer id);
+	
+	public List<LocationDTO> findAllByCompanyId(Integer id);
 
 	public LocationDTO save(LocationRequestDTO request);
 
@@ -20,6 +22,6 @@ public interface LocationService {
 
 	public void delete(Integer id);
 	
-	public Page<LocationDTO> findAllPageable(int pageIndex, int pageSize);
+	public Page<LocationDTO> findAllPageable(int pageIndex, int pageSize);	
 
 }

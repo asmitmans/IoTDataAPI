@@ -43,7 +43,10 @@ build/
 # Credenciales y configuración sensible
 .env
 application.properties
+application.dev.properties
 application.yml
 
 # Dependencias de Maven
 .mvn/
+
+keystore.p12

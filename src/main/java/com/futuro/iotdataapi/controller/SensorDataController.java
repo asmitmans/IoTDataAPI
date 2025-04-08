@@ -19,10 +19,12 @@ import com.futuro.iotdataapi.dto.SensorDataUploadRequest;
 import com.futuro.iotdataapi.dto.SensorDataUploadResponse;
 import com.futuro.iotdataapi.service.SensorDataService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/sensor_data")
+@Tag(name = "Sensor Data resource")
 public class SensorDataController {
 	
 	private static final String PAGE_DEFAULT_SIZE = "7";

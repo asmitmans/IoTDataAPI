@@ -19,12 +19,14 @@ import com.futuro.iotdataapi.dto.LocationDTO;
 import com.futuro.iotdataapi.dto.LocationRequestDTO;
 import com.futuro.iotdataapi.service.LocationService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/locations")
 @RequiredArgsConstructor
+@Tag(name = "Locations resource")
 public class LocationController {
 	
 	private static final String PAGE_DEFAULT_SIZE = "7";

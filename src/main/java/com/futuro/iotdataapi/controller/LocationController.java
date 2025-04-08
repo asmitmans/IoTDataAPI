@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.futuro.iotdataapi.dto.LocationDTO;
 import com.futuro.iotdataapi.dto.LocationRequestDTO;
-import com.futuro.iotdataapi.service.LocationServiceImpl;
+import com.futuro.iotdataapi.service.LocationService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class LocationController {
 	
 	private static final String PAGE_DEFAULT_SIZE = "7";
 
-    private final LocationServiceImpl locationService;
+    private final LocationService locationService;
 
     @GetMapping
     public ResponseEntity<List<LocationDTO>> getAllLocations() {
@@ -40,6 +40,11 @@ public class LocationController {
     public ResponseEntity<LocationDTO> getLocationById(@PathVariable Integer id) {
         Optional<LocationDTO> location = locationService.findById(id);
         return location.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+    
+    @GetMapping("/company/{id}")
+    public ResponseEntity<List<LocationDTO>> getAllLocationsByCompanyId(@PathVariable Integer id) {
+        return ResponseEntity.ok(locationService.findAllByCompanyId(id));
     }
 
     @PostMapping

@@ -101,3 +101,17 @@ WHERE u.username = 'admin' AND r.name = 'ADMIN'
 ON CONFLICT DO NOTHING;
 
 -- ------------------------------------------------------------
+
+-- Insertar rol menus
+INSERT INTO menu(id_menu, id_father, father_name, item_name, icon, icon_fury, url) VALUES (1, 1, 'Home', 'Dashboard', 'pi pi-fw pi-home', 'dashboard', '/dashboard');
+INSERT INTO menu(id_menu, id_father, father_name, item_name, icon, icon_fury, url) VALUES (2, 2, 'Search', 'Sensor Data', 'pi pi-fw pi-arrow-right-arrow-left', 'search', '/search/sensor-data');
+INSERT INTO menu(id_menu, id_father, father_name, item_name, icon, icon_fury, url) VALUES (3, 3, 'Data', 'Companies', 'pi pi-fw pi-id-card', 'factory', '/pages/data/companies');
+INSERT INTO menu(id_menu, id_father, father_name, item_name, icon, icon_fury, url) VALUES (4, 3, 'Data', 'Locations', 'pi pi-fw pi-id-card', 'pin_drop', '/pages/data/locations');
+INSERT INTO menu(id_menu, id_father, father_name, item_name, icon, icon_fury, url) VALUES (5, 3, 'Data', 'Sensors', 'pi pi-fw pi-id-card', 'sensors', '/pages/data/sensors');
+
+-- asignar menu a rol
+INSERT INTO menu_role (id_menu, id_role) VALUES (1, 1);
+INSERT INTO menu_role (id_menu, id_role) VALUES (2, 1);
+INSERT INTO menu_role (id_menu, id_role) VALUES (3, 1);
+INSERT INTO menu_role (id_menu, id_role) VALUES (4, 1);
+INSERT INTO menu_role (id_menu, id_role) VALUES (5, 1);

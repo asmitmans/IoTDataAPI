@@ -1,7 +1,6 @@
 package com.futuro.iotdataapi.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 
@@ -12,7 +11,7 @@ public interface LocationService {
 
 	public List<LocationDTO> findAll();
 
-	public Optional<LocationDTO> findById(Integer id);
+	public LocationDTO findById(Integer id);
 	
 	public List<LocationDTO> findAllByCompanyId(Integer id);
 

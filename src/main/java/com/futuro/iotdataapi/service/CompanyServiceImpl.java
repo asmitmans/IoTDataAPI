@@ -1,7 +1,6 @@
 package com.futuro.iotdataapi.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,8 +28,9 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
-    public Optional<CompanyDTO> findById(Integer id) {
-        return companyRepository.findById(id).map(this::toDTO);
+    public CompanyDTO findById(Integer id) {
+    	Company company = companyRepository.findById(id).orElseThrow(() -> new RuntimeException("Company not found with id: " + id));    	
+        return toDTO(company);
     }
 
     @Override

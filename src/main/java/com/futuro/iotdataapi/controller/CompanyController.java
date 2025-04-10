@@ -40,8 +40,8 @@ public class CompanyController {
 
 	@GetMapping("/{id}")
 	public ResponseEntity<CompanyDTO> getCompanyById(@PathVariable Integer id) {
-		Optional<CompanyDTO> company = companyService.findById(id);
-		return company.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+		CompanyDTO companyDto = companyService.findById(id);
+		return ResponseEntity.ok(companyDto);
 	}
 
 	@PostMapping

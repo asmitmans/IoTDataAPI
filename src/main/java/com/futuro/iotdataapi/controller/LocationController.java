@@ -1,7 +1,6 @@
 package com.futuro.iotdataapi.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -40,8 +39,8 @@ public class LocationController {
 
     @GetMapping("/{id}")
     public ResponseEntity<LocationDTO> getLocationById(@PathVariable Integer id) {
-        Optional<LocationDTO> location = locationService.findById(id);
-        return location.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        LocationDTO location = locationService.findById(id);
+        return ResponseEntity.ok(location);
     }
     
     @GetMapping("/company/{id}")

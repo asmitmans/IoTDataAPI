@@ -2,7 +2,6 @@ package com.futuro.iotdataapi.service;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -33,8 +32,9 @@ public class LocationServiceImpl implements LocationService {
     }
 
 	@Override
-    public Optional<LocationDTO> findById(Integer id) {
-        return locationRepository.findById(id).map(this::toDTO);
+    public LocationDTO findById(Integer id) {
+		Location location = locationRepository.findById(id).orElseThrow(() -> new RuntimeException("Location not found with id: " + id));		
+        return toDTO(location);
     }
 	
 	@Override

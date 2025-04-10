@@ -19,12 +19,14 @@ import com.futuro.iotdataapi.dto.CompanyDTO;
 import com.futuro.iotdataapi.dto.CompanyRequestDTO;
 import com.futuro.iotdataapi.service.CompanyService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/companies")
 @RequiredArgsConstructor
+@Tag(name = "Companies resource")
 public class CompanyController {
 
 	private static final String PAGE_DEFAULT_SIZE = "7";

@@ -14,11 +14,13 @@ import com.futuro.iotdataapi.dto.MenuModelDto;
 import com.futuro.iotdataapi.dto.MenuModelItemDto;
 import com.futuro.iotdataapi.service.MenuService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("api/v1/menus")
 @RequiredArgsConstructor
+@Tag(name = "Menus resource")
 public class MenuController {
 	
 	private final MenuService service;

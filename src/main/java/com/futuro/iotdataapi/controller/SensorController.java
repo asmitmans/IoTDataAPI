@@ -19,10 +19,12 @@ import com.futuro.iotdataapi.dto.SensorRegisterResponse;
 import com.futuro.iotdataapi.dto.SensorResponse;
 import com.futuro.iotdataapi.service.SensorService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/sensors")
+@Tag(name = "Sensors resource")
 public class SensorController {
 	
 	private static final String PAGE_DEFAULT_SIZE = "7";

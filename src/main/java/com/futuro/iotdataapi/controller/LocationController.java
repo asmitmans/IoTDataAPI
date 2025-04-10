@@ -3,6 +3,7 @@ package com.futuro.iotdataapi.controller;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,7 +51,7 @@ public class LocationController {
 
     @PostMapping
     public ResponseEntity<LocationDTO> createLocation(@Valid @RequestBody LocationRequestDTO request) {
-        return ResponseEntity.ok(locationService.save(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(locationService.save(request));
     }
 
     @PutMapping("/{id}")

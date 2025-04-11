@@ -55,6 +55,21 @@ public class SensorServiceImpl implements SensorService {
 
     @Override
     @Transactional
+    public void deleteSensor(Integer id, String rawAuthorization) {
+        Company company = getAuthorizedCompany(rawAuthorization);
+
+        Sensor sensor = sensorRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
+
+        if (!sensor.getLocation().getCompany().getId().equals(company.getId())) {
+            throw new UnauthorizedException("No autorizado para eliminar este sensor");
+        }
+
+        sensorRepository.delete(sensor);
+    }
+
+    @Override
+    @Transactional
     public SensorRegisterResponse registerSensor(SensorRegisterRequest request,
                                                  String rawAuthorization) {
 
@@ -136,6 +151,12 @@ public class SensorServiceImpl implements SensorService {
             throw new RuntimeException("Missing or malformed Authorization header");
         }
         return rawAuthorization.replace("ApiKey ", "").trim();
+    }
+
+    private Company getAuthorizedCompany(String rawAuthorization) {
+        String companyApiKey = extractApiKey(rawAuthorization);
+        return companyRepository.findByCompanyApiKey(companyApiKey)
+                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
     }
 
     @Override

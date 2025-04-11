@@ -2,11 +2,11 @@ package com.futuro.iotdataapi.util;
 
 public enum MenuTypeFuryEnum {
 	/**
-	 * {@code VENTA}
+	 * {@code subheading}
 	 */
 	SUBHEADING(1, "subheading"),
 	/**
-	 * {@code RECHAZO}
+	 * {@code Item}
 	 */
 	ITEM(2, "item");
 

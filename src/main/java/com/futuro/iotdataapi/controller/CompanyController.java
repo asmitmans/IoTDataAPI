@@ -1,9 +1,9 @@
 package com.futuro.iotdataapi.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,13 +40,13 @@ public class CompanyController {
 
 	@GetMapping("/{id}")
 	public ResponseEntity<CompanyDTO> getCompanyById(@PathVariable Integer id) {
-		Optional<CompanyDTO> company = companyService.findById(id);
-		return company.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+		CompanyDTO companyDto = companyService.findById(id);
+		return ResponseEntity.ok(companyDto);
 	}
 
 	@PostMapping
 	public ResponseEntity<CompanyDTO> createCompany(@Valid @RequestBody CompanyRequestDTO request) {
-		return ResponseEntity.ok(companyService.save(request));
+		return ResponseEntity.status(HttpStatus.CREATED).body(companyService.save(request));
 	}
 
 	@PutMapping("/{id}")

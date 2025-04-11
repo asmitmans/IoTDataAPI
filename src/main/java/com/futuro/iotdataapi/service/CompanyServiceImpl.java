@@ -1,7 +1,6 @@
 package com.futuro.iotdataapi.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.futuro.iotdataapi.dto.CompanyDTO;
 import com.futuro.iotdataapi.dto.CompanyRequestDTO;
 import com.futuro.iotdataapi.entity.Company;
+import com.futuro.iotdataapi.exception.NotFoundException;
 import com.futuro.iotdataapi.repository.CompanyRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -29,8 +29,9 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
-    public Optional<CompanyDTO> findById(Integer id) {
-        return companyRepository.findById(id).map(this::toDTO);
+    public CompanyDTO findById(Integer id) {
+    	Company company = companyRepository.findById(id).orElseThrow(() -> new NotFoundException("Company not found with id: " + id));    	
+        return toDTO(company);
     }
 
     @Override
@@ -53,7 +54,7 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public CompanyDTO update(Integer id, CompanyRequestDTO request) {
-        Company company = companyRepository.findById(id).orElseThrow(() -> new RuntimeException("Company not found with id: " + id));
+        Company company = companyRepository.findById(id).orElseThrow(() -> new NotFoundException("Company not found with id: " + id));
 
         company.setCompanyName(request.getCompanyName());
         company.setCompanyApiKey(request.getCompanyApiKey());

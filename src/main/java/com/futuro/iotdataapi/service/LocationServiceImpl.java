@@ -2,7 +2,6 @@ package com.futuro.iotdataapi.service;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -15,6 +14,7 @@ import com.futuro.iotdataapi.dto.LocationDTO;
 import com.futuro.iotdataapi.dto.LocationRequestDTO;
 import com.futuro.iotdataapi.entity.Company;
 import com.futuro.iotdataapi.entity.Location;
+import com.futuro.iotdataapi.exception.NotFoundException;
 import com.futuro.iotdataapi.repository.CompanyRepository;
 import com.futuro.iotdataapi.repository.LocationRepository;
 
@@ -33,8 +33,9 @@ public class LocationServiceImpl implements LocationService {
     }
 
 	@Override
-    public Optional<LocationDTO> findById(Integer id) {
-        return locationRepository.findById(id).map(this::toDTO);
+    public LocationDTO findById(Integer id) {
+		Location location = locationRepository.findById(id).orElseThrow(() -> new NotFoundException("Location not found with id: " + id));		
+        return toDTO(location);
     }
 	
 	@Override
@@ -48,7 +49,7 @@ public class LocationServiceImpl implements LocationService {
 
 	@Override
     public LocationDTO save(LocationRequestDTO request) {
-        Company company = companyRepository.findById(request.getCompanyId()).orElseThrow(() -> new RuntimeException("Company not found with id: " + request.getCompanyId()));
+        Company company = companyRepository.findById(request.getCompanyId()).orElseThrow(() -> new NotFoundException("Company not found with id: " + request.getCompanyId()));
 
         Location location = Location.builder()
                 .company(company)
@@ -64,9 +65,9 @@ public class LocationServiceImpl implements LocationService {
 	@Override
     public LocationDTO update(Integer id, LocationRequestDTO request) {
         Location location = locationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Location not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Location not found with id: " + id));
 
-        Company company = companyRepository.findById(request.getCompanyId()).orElseThrow(() -> new RuntimeException("Company not found with id: " + request.getCompanyId()));
+        Company company = companyRepository.findById(request.getCompanyId()).orElseThrow(() -> new NotFoundException("Company not found with id: " + request.getCompanyId()));
 
         location.setCompany(company);
         location.setLocationName(request.getLocationName());

@@ -2,6 +2,7 @@ package com.futuro.iotdataapi.service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.futuro.iotdataapi.dto.CompanyDTO;
 import com.futuro.iotdataapi.dto.LocationDTO;
@@ -20,6 +22,7 @@ import com.futuro.iotdataapi.dto.SensorResponse;
 import com.futuro.iotdataapi.entity.Company;
 import com.futuro.iotdataapi.entity.Location;
 import com.futuro.iotdataapi.entity.Sensor;
+import com.futuro.iotdataapi.exception.NotFoundException;
 import com.futuro.iotdataapi.exception.UnauthorizedException;
 import com.futuro.iotdataapi.repository.CompanyRepository;
 import com.futuro.iotdataapi.repository.LocationRepository;
@@ -43,6 +46,12 @@ public class SensorServiceImpl implements SensorService {
         this.sensorRepository = sensorRepository;
         this.objectMapper = objectMapper;
     }
+    
+    @Override
+    public SensorResponse findById(Integer id) {
+		Sensor sensor = sensorRepository.findById(id).orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));		
+        return toDTO(sensor);
+    }
 
     @Override
     @Transactional
@@ -52,11 +61,11 @@ public class SensorServiceImpl implements SensorService {
         String companyApiKey = extractApiKey(rawAuthorization);
 
         Company company = companyRepository.findByCompanyApiKey(companyApiKey)
-                .orElseThrow(() -> new RuntimeException("Company not found or unauthorized"));
+                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
 
         Location location = locationRepository.findById(request.getLocationId())
                 .filter(loc -> loc.getCompany().getId().equals(company.getId()))
-                .orElseThrow(() -> new RuntimeException("Invalid location for this company"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
 
         String metaJson;
         try {
@@ -73,6 +82,45 @@ public class SensorServiceImpl implements SensorService {
         sensor.setCategory(request.getSensorCategory());
         sensor.setSensorMeta(metaJson);
         sensor.setSensorApiKey(UUID.randomUUID().toString());
+
+        Sensor savedSensor = sensorRepository.save(sensor);
+
+        return SensorRegisterResponse.builder()
+                .id(savedSensor.getId())
+                .message(savedSensor.getSensorName())
+                .sensorApiKey(savedSensor.getSensorApiKey())
+                .build();
+    }
+    
+    @Override
+    @Transactional
+    public SensorRegisterResponse updateSensor(Integer id, SensorRegisterRequest request,
+                                                 String rawAuthorization) {
+    	
+    	Sensor sensor = sensorRepository.findById(id).orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
+
+        String companyApiKey = extractApiKey(rawAuthorization);
+
+        Company company = companyRepository.findByCompanyApiKey(companyApiKey)
+                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+
+        Location location = locationRepository.findById(request.getLocationId())
+                .filter(loc -> loc.getCompany().getId().equals(company.getId()))
+                .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
+
+        String metaJson;
+        try {
+            metaJson = request.getSensorMeta() != null
+                    ? objectMapper.writeValueAsString(request.getSensorMeta())
+                    : "{}";
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error al convertir sensorMeta a JSON", e);
+        }
+        
+        sensor.setLocation(location);
+        sensor.setSensorName(request.getSensorName());
+        sensor.setCategory(request.getSensorCategory());
+        sensor.setSensorMeta(metaJson);        
 
         Sensor savedSensor = sensorRepository.save(sensor);
 
@@ -153,14 +201,23 @@ public class SensorServiceImpl implements SensorService {
         .locationMeta(sensor.getLocation().getLocationMeta())
         .build();
     	
+    	SensorResponse sensorResponse = null;
+    	try {
+            Map<String, Object> meta = objectMapper.readValue(sensor.getSensorMeta(), new TypeReference<>() {});
+            
+            sensorResponse = SensorResponse.builder()
+            .id(sensor.getId())
+            .sensorName(sensor.getSensorName())
+            .sensorCategory(sensor.getCategory())
+            .sensorApiKey(sensor.getSensorApiKey())
+            .location(locationDto)
+            .sensorMeta(meta)
+            .build();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error sensorMeta JSON", e);
+        }
     	
-        return SensorResponse.builder()
-                .id(sensor.getId())
-                .sensorName(sensor.getSensorName())
-                .sensorCategory(sensor.getCategory())
-                .sensorApiKey(sensor.getSensorApiKey())
-                .location(locationDto)
-                .build();
+        return sensorResponse;
     }
 
 }

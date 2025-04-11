@@ -1,7 +1,6 @@
 package com.futuro.iotdataapi.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 
@@ -12,7 +11,7 @@ public interface CompanyService {
 
 	public List<CompanyDTO> findAll();
 
-    public Optional<CompanyDTO> findById(Integer id);
+    public CompanyDTO findById(Integer id);
 
     public CompanyDTO save(CompanyRequestDTO request);
 

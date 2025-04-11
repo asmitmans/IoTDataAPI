@@ -39,11 +39,11 @@ public class SensorDataServiceImpl implements SensorDataService {
         String sensorApiKey = extractApiKey(rawAuthorization);
 
         if (!request.getSensor_api_key().equals(sensorApiKey)) {
-            throw new RuntimeException("Sensor API Key no coincide entre header y body");
+            throw new UnauthorizedException("Sensor API Key no coincide entre header y body");
         }
 
         Sensor sensor = sensorRepository.findBySensorApiKey(request.getSensor_api_key())
-                .orElseThrow(() -> new RuntimeException("Sensor no registrado"));
+                .orElseThrow(() -> new UnauthorizedException("Sensor no registrado"));
 
         List<SensorData> registers = parseSensorData(request.getJson_data(), sensor);
 

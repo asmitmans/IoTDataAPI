@@ -47,7 +47,7 @@ public class SensorServiceImpl implements SensorService {
     
     @Override
     public SensorResponse findById(Integer id) {
-		Sensor sensor = sensorRepository.findById(id).orElseThrow(() -> new UnauthorizedException("Sensor not found with id: " + id));		
+		Sensor sensor = sensorRepository.findById(id).orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));		
         return toDTO(sensor);
     }
 

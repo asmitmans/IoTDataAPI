@@ -2,6 +2,7 @@ package com.futuro.iotdataapi.service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.futuro.iotdataapi.dto.CompanyDTO;
 import com.futuro.iotdataapi.dto.LocationDTO;
@@ -199,14 +201,23 @@ public class SensorServiceImpl implements SensorService {
         .locationMeta(sensor.getLocation().getLocationMeta())
         .build();
     	
+    	SensorResponse sensorResponse = null;
+    	try {
+            Map<String, Object> meta = objectMapper.readValue(sensor.getSensorMeta(), new TypeReference<>() {});
+            
+            sensorResponse = SensorResponse.builder()
+            .id(sensor.getId())
+            .sensorName(sensor.getSensorName())
+            .sensorCategory(sensor.getCategory())
+            .sensorApiKey(sensor.getSensorApiKey())
+            .location(locationDto)
+            .sensorMeta(meta)
+            .build();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error sensorMeta JSON", e);
+        }
     	
-        return SensorResponse.builder()
-                .id(sensor.getId())
-                .sensorName(sensor.getSensorName())
-                .sensorCategory(sensor.getCategory())
-                .sensorApiKey(sensor.getSensorApiKey())
-                .location(locationDto)
-                .build();
+        return sensorResponse;
     }
 
 }

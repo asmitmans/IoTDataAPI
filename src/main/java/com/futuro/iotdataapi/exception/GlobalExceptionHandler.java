@@ -42,6 +42,18 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
+    
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ExceptionResponse> handleNotFoundException(Exception ex) {
+        ExceptionResponse response = new ExceptionResponse(
+                new Date(),
+                "Not found",
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
 
     // Errores generales
     @ExceptionHandler(Exception.class)

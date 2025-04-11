@@ -8,6 +8,8 @@ import com.futuro.iotdataapi.dto.SensorRegisterRequest;
 import com.futuro.iotdataapi.dto.SensorRegisterResponse;
 import com.futuro.iotdataapi.dto.SensorResponse;
 
+import jakarta.validation.Valid;
+
 public interface SensorService {
     public SensorRegisterResponse registerSensor(SensorRegisterRequest request,
                                                  String companyApiKey);
@@ -16,4 +18,8 @@ public interface SensorService {
 			int pageSize);
 
 	public List<SensorResponse> getAllSensors(String authorization, Integer companyId, int locationId);
+
+	public SensorRegisterResponse updateSensor(Integer id, @Valid SensorRegisterRequest request, String authorization);
+
+	public SensorResponse findById(Integer id);
 }

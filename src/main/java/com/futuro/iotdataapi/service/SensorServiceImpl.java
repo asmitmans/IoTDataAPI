@@ -72,8 +72,7 @@ public class SensorServiceImpl implements SensorService {
   @Override
   @Transactional
   public void deleteSensor(Integer id, String authorization) {
-    Sensor sensor =
-        sensorRepository
+    Sensor sensor = sensorRepository
             .findById(id)
             .orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
 
@@ -82,12 +81,20 @@ public class SensorServiceImpl implements SensorService {
       return;
     }
 
-    String companyApiKey = extractApiKey(authorization);
+    Company company;
 
-    Company company =
-        companyRepository
-            .findByCompanyApiKey(companyApiKey)
-            .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    if (authorization != null && authorization.startsWith("ApiKey ")) {
+      // API KEY
+      String companyApiKey = extractApiKey(authorization);
+      company = companyRepository
+              .findByCompanyApiKey(companyApiKey)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    } else {
+      // JWT (usuario autenticado)
+      Integer companyId = extractCompanyIdFromJwtToken();
+      company = companyRepository.findById(companyId)
+                                 .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    }
 
     if (!sensor.getLocation().getCompany().getId().equals(company.getId())) {
       throw new UnauthorizedException("This sensor does not belong to your company");

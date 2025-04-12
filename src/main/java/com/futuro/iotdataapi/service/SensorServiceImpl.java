@@ -168,7 +168,35 @@ public class SensorServiceImpl implements SensorService {
 
   @Override
   public List<SensorResponse> getAllSensors(String authorization) {
-    return List.of();
+    Company company;
+
+    if (hasAdminRole()) {
+      return sensorRepository.findAll().stream().map(this::toDTO).toList();
+    }
+
+    if (authorization != null && authorization.startsWith("ApiKey ")) {
+      String companyApiKey = extractApiKey(authorization);
+      company =
+          companyRepository
+              .findByCompanyApiKey(companyApiKey)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    } else {
+      Integer companyId = extractCompanyIdFromJwtToken();
+      company =
+          companyRepository
+              .findById(companyId)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    }
+
+    List<Integer> locationIds =
+        locationRepository
+            .findAllByCompanyId(company.getId())
+            .orElse(Collections.emptyList())
+            .stream()
+            .map(Location::getId)
+            .toList();
+
+    return sensorRepository.findByLocationIdIn(locationIds).stream().map(this::toDTO).toList();
   }
 
   @Override

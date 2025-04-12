@@ -29,12 +29,22 @@ public class SensorController {
     public SensorController(SensorService sensorService) {
         this.sensorService = sensorService;
     }
-    
+
     @GetMapping("/{id}")
-    public ResponseEntity<SensorResponse> getLocationById(@PathVariable Integer id) {
-    	SensorResponse sensor = sensorService.findById(id);
-        return ResponseEntity.ok(sensor);
+    public ResponseEntity<SensorResponse> getSensorById(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
+            @PathVariable Integer id) {
+
+        return ResponseEntity.ok(sensorService.getSensorById(id, authorization));
     }
+
+    @GetMapping
+    public ResponseEntity<List<SensorResponse>> getSensorsFromContext(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
+        return ResponseEntity.ok(sensorService.getAllSensors(authorization));
+    }
+
+
 
     @PostMapping
     public ResponseEntity<SensorRegisterResponse> registerSensor(
@@ -69,12 +79,12 @@ public class SensorController {
     }
     
     @GetMapping("/company/{companyId}")
-    public ResponseEntity<List<SensorResponse>> getAllSensors(
+    public ResponseEntity<List<SensorResponse>> getAllSensorsByCompany(
     		@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, 
     		@PathVariable Integer companyId,
     		@RequestParam(value = "location", required = false, 
 			defaultValue = LOCATION_DEFAULT) int locationId) {
-        return ResponseEntity.ok(sensorService.getAllSensors(authorization, companyId, locationId));
+        return ResponseEntity.ok(sensorService.getAllSensorsByCompany(authorization, companyId, locationId));
     }
 
     @DeleteMapping("/{id}")

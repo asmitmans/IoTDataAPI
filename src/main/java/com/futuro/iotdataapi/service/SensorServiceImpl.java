@@ -61,53 +61,6 @@ public class SensorServiceImpl implements SensorService {
   }
 
   @Override
-  public SensorResponse findById(Integer id) {
-    Sensor sensor =
-        sensorRepository
-            .findById(id)
-            .orElseThrow(() -> new NotFoundException("Sensor not found " + "with " + "id: " + id));
-    return toDTO(sensor);
-  }
-
-  @Override
-  @Transactional
-  public void deleteSensor(Integer id, String authorization) {
-    Sensor sensor =
-        sensorRepository
-            .findById(id)
-            .orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
-
-    if (hasAdminRole()) {
-      sensorRepository.delete(sensor);
-      return;
-    }
-
-    Company company;
-
-    if (authorization != null && authorization.startsWith("ApiKey ")) {
-      // API KEY
-      String companyApiKey = extractApiKey(authorization);
-      company =
-          companyRepository
-              .findByCompanyApiKey(companyApiKey)
-              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
-    } else {
-      // JWT (usuario autenticado)
-      Integer companyId = extractCompanyIdFromJwtToken();
-      company =
-          companyRepository
-              .findById(companyId)
-              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
-    }
-
-    if (!sensor.getLocation().getCompany().getId().equals(company.getId())) {
-      throw new UnauthorizedException("This sensor does not belong to your company");
-    }
-
-    sensorRepository.delete(sensor);
-  }
-
-  @Override
   @Transactional
   public SensorRegisterResponse registerSensor(
       SensorRegisterRequest request, String rawAuthorization) {
@@ -174,6 +127,129 @@ public class SensorServiceImpl implements SensorService {
         .message(savedSensor.getSensorName())
         .sensorApiKey(savedSensor.getSensorApiKey())
         .build();
+  }
+
+  @Override
+  public SensorResponse getSensorById(Integer id, String authorization) {
+    Sensor sensor =
+        sensorRepository
+            .findById(id)
+            .orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
+
+    Company company;
+
+    if (hasAdminRole()) {
+      return toDTO(sensor);
+    }
+
+    if (authorization != null && authorization.startsWith("ApiKey ")) {
+      // API Key
+      String companyApiKey = extractApiKey(authorization);
+      company =
+          companyRepository
+              .findByCompanyApiKey(companyApiKey)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+
+    } else {
+      // JWT
+      Integer companyId = extractCompanyIdFromJwtToken();
+      company =
+          companyRepository
+              .findById(companyId)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    }
+
+    if (!sensor.getLocation().getCompany().getId().equals(company.getId())) {
+      throw new UnauthorizedException("This sensor does not belong to your company");
+    }
+
+    return toDTO(sensor);
+  }
+
+  @Override
+  public List<SensorResponse> getAllSensors(String authorization) {
+    return List.of();
+  }
+
+  @Override
+  public Page<SensorResponse> findAllByLocationIdPageable(
+      String rawAuthorization, Integer id, int pageIndex, int pageSize) {
+    String companyApiKey = extractApiKey(rawAuthorization);
+
+    Company company =
+        companyRepository
+            .findByCompanyApiKey(companyApiKey)
+            .orElseThrow(
+                () -> new UnauthorizedException("Company not " + "found " + "or unauthorized"));
+
+    Location location =
+        locationRepository
+            .findById(id)
+            .filter(loc -> loc.getCompany().getId().intValue() == company.getId().intValue())
+            .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
+
+    Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+    Page<Sensor> pages = sensorRepository.findByLocationId(location.getId(), pageable);
+
+    return pages.map(this::toDTO);
+  }
+
+  @Override
+  public List<SensorResponse> getAllSensorsByCompany(
+      String rawAuthorization, Integer companyId, int locationId) {
+    Company company;
+
+    if (hasAdminRole()) {
+      if (companyId == null) {
+        throw new UnauthorizedException("Admin must provide companyId");
+      }
+
+      company =
+          companyRepository
+              .findById(companyId)
+              .orElseThrow(() -> new NotFoundException("Company not found with id: " + companyId));
+
+    } else if (rawAuthorization != null && rawAuthorization.startsWith("ApiKey ")) {
+      String companyApiKey = extractApiKey(rawAuthorization);
+      company =
+          companyRepository
+              .findByCompanyApiKey(companyApiKey)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+
+      if (!company.getId().equals(companyId)) {
+        throw new UnauthorizedException("Unauthorized companyId");
+      }
+
+    } else {
+      Integer companyIdFromJwt = extractCompanyIdFromJwtToken();
+      company =
+          companyRepository
+              .findById(companyIdFromJwt)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    }
+
+    List<Integer> locationIds;
+
+    if (locationId == -1) {
+      locationIds =
+          locationRepository
+              .findAllByCompanyId(company.getId())
+              .orElse(Collections.emptyList())
+              .stream()
+              .map(Location::getId)
+              .collect(Collectors.toList());
+    } else {
+      Location location =
+          locationRepository
+              .findById(locationId)
+              .filter(loc -> loc.getCompany().getId().equals(company.getId()))
+              .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
+
+      locationIds = Collections.singletonList(location.getId());
+    }
+
+    return sensorRepository.findByLocationIdIn(locationIds).stream().map(this::toDTO).toList();
   }
 
   @Override
@@ -252,78 +328,42 @@ public class SensorServiceImpl implements SensorService {
         .build();
   }
 
-  private String extractApiKey(String rawAuthorization) {
-    if (rawAuthorization == null || !rawAuthorization.startsWith("ApiKey ")) {
-      throw new RuntimeException("Missing or malformed Authorization " + "header");
-    }
-    return rawAuthorization.replace("ApiKey ", "").trim();
-  }
-
-  private Company getAuthorizedCompany(String rawAuthorization) {
-    String companyApiKey = extractApiKey(rawAuthorization);
-    return companyRepository
-        .findByCompanyApiKey(companyApiKey)
-        .orElseThrow(
-            () -> new UnauthorizedException("Company not " + "found " + "or " + "unauthorized"));
-  }
-
   @Override
-  public Page<SensorResponse> findAllByLocationIdPageable(
-      String rawAuthorization, Integer id, int pageIndex, int pageSize) {
-    String companyApiKey = extractApiKey(rawAuthorization);
-
-    Company company =
-        companyRepository
-            .findByCompanyApiKey(companyApiKey)
-            .orElseThrow(
-                () -> new UnauthorizedException("Company not " + "found " + "or unauthorized"));
-
-    Location location =
-        locationRepository
+  @Transactional
+  public void deleteSensor(Integer id, String authorization) {
+    Sensor sensor =
+        sensorRepository
             .findById(id)
-            .filter(loc -> loc.getCompany().getId().intValue() == company.getId().intValue())
-            .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
+            .orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
 
-    Pageable pageable = PageRequest.of(pageIndex, pageSize);
-
-    Page<Sensor> pages = sensorRepository.findByLocationId(location.getId(), pageable);
-
-    return pages.map(this::toDTO);
-  }
-
-  @Override
-  public List<SensorResponse> getAllSensors(
-      String rawAuthorization, Integer companyId, int locationId) {
-    String companyApiKey = extractApiKey(rawAuthorization);
-
-    Company company =
-        companyRepository
-            .findByCompanyApiKey(companyApiKey)
-            .orElseThrow(
-                () -> new UnauthorizedException("Company not " + "found " + "or unauthorized"));
-
-    if (company.getId().intValue() != companyId.intValue()) {
-      throw new UnauthorizedException("Company not found or " + "unauthorized");
+    if (hasAdminRole()) {
+      sensorRepository.delete(sensor);
+      return;
     }
 
-    List<Integer> locationIds;
+    Company company;
 
-    if (locationId == -1) {
-      locationIds =
-          locationRepository.findAllByCompanyId(companyId).orElse(Collections.emptyList()).stream()
-              .map(Location::getId)
-              .collect(Collectors.toList());
+    if (authorization != null && authorization.startsWith("ApiKey ")) {
+      // API KEY
+      String companyApiKey = extractApiKey(authorization);
+      company =
+          companyRepository
+              .findByCompanyApiKey(companyApiKey)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
     } else {
-      Location location =
-          locationRepository
-              .findById(locationId)
-              .filter(loc -> loc.getCompany().getId().equals(company.getId()))
-              .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
-
-      locationIds = Collections.singletonList(location.getId());
+      // JWT (usuario autenticado)
+      Integer companyId = extractCompanyIdFromJwtToken();
+      company =
+          companyRepository
+              .findById(companyId)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
     }
 
-    return sensorRepository.findByLocationIdIn(locationIds).stream().map(this::toDTO).toList();
+    if (!sensor.getLocation().getCompany().getId().equals(company.getId())) {
+      throw new UnauthorizedException("This sensor does not belong to your company");
+    }
+
+    sensorRepository.delete(sensor);
   }
 
   private SensorResponse toDTO(Sensor sensor) {
@@ -360,7 +400,6 @@ public class SensorServiceImpl implements SensorService {
     } catch (JsonProcessingException e) {
       throw new RuntimeException("Error sensorMeta JSON", e);
     }
-
     return sensorResponse;
   }
 
@@ -390,5 +429,20 @@ public class SensorServiceImpl implements SensorService {
     }
 
     return authHeader.substring(7); // remover "Bearer "
+  }
+
+  private String extractApiKey(String rawAuthorization) {
+    if (rawAuthorization == null || !rawAuthorization.startsWith("ApiKey ")) {
+      throw new RuntimeException("Missing or malformed Authorization " + "header");
+    }
+    return rawAuthorization.replace("ApiKey ", "").trim();
+  }
+
+  private Company getAuthorizedCompany(String rawAuthorization) {
+    String companyApiKey = extractApiKey(rawAuthorization);
+    return companyRepository
+        .findByCompanyApiKey(companyApiKey)
+        .orElseThrow(
+            () -> new UnauthorizedException("Company not " + "found " + "or " + "unauthorized"));
   }
 }

@@ -7,3 +7,9 @@
 - Así, si una compañía es eliminada, los usuarios no se eliminan, pero su relación se pierde de forma controlada.
 - Script aplicado en la infraestructura de desarrollo.
 - Script `create_iot_schema.sql` fue actualizado en el repositorio para reflejar este cambio.
+
+```sql:
+ALTER TABLE users
+ADD COLUMN company_id INTEGER REFERENCES company(id) ON DELETE SET NULL;
+```
+---

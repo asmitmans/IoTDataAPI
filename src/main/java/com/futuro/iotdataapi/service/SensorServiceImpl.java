@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -33,212 +34,266 @@ import jakarta.transaction.Transactional;
 @Service
 public class SensorServiceImpl implements SensorService {
 
-    private final CompanyRepository companyRepository;
-    private final LocationRepository locationRepository;
-    private final SensorRepository sensorRepository;
-    private final ObjectMapper objectMapper;
+  private final CompanyRepository companyRepository;
+  private final LocationRepository locationRepository;
+  private final SensorRepository sensorRepository;
+  private final ObjectMapper objectMapper;
 
-    public SensorServiceImpl(CompanyRepository companyRepository,
-                             LocationRepository locationRepository,
-                             SensorRepository sensorRepository, ObjectMapper objectMapper) {
-        this.companyRepository = companyRepository;
-        this.locationRepository = locationRepository;
-        this.sensorRepository = sensorRepository;
-        this.objectMapper = objectMapper;
-    }
-    
-    @Override
-    public SensorResponse findById(Integer id) {
-		Sensor sensor = sensorRepository.findById(id).orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));		
-        return toDTO(sensor);
-    }
+  public SensorServiceImpl(
+      CompanyRepository companyRepository,
+      LocationRepository locationRepository,
+      SensorRepository sensorRepository,
+      ObjectMapper objectMapper) {
+    this.companyRepository = companyRepository;
+    this.locationRepository = locationRepository;
+    this.sensorRepository = sensorRepository;
+    this.objectMapper = objectMapper;
+  }
 
-    @Override
-    @Transactional
-    public void deleteSensor(Integer id, String rawAuthorization) {
-        Company company = getAuthorizedCompany(rawAuthorization);
+  @Override
+  public SensorResponse findById(Integer id) {
+    Sensor sensor =
+        sensorRepository
+            .findById(id)
+            .orElseThrow(() -> new NotFoundException("Sensor not found " + "with " + "id: " + id));
+    return toDTO(sensor);
+  }
 
-        Sensor sensor = sensorRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
+  @Override
+  @Transactional
+  public void deleteSensor(Integer id, String authorization) {
+    Sensor sensor =
+        sensorRepository
+            .findById(id)
+            .orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
 
-        if (!sensor.getLocation().getCompany().getId().equals(company.getId())) {
-            throw new UnauthorizedException("No autorizado para eliminar este sensor");
-        }
+    if (hasAdminRole()) {
 
-        sensorRepository.delete(sensor);
-    }
-
-    @Override
-    @Transactional
-    public SensorRegisterResponse registerSensor(SensorRegisterRequest request,
-                                                 String rawAuthorization) {
-
-        String companyApiKey = extractApiKey(rawAuthorization);
-
-        Company company = companyRepository.findByCompanyApiKey(companyApiKey)
-                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
-
-        Location location = locationRepository.findById(request.getLocationId())
-                .filter(loc -> loc.getCompany().getId().equals(company.getId()))
-                .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
-
-        String metaJson;
-        try {
-            metaJson = request.getSensorMeta() != null
-                    ? objectMapper.writeValueAsString(request.getSensorMeta())
-                    : "{}";
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error al convertir sensorMeta a JSON", e);
-        }
-
-        Sensor sensor = new Sensor();
-        sensor.setLocation(location);
-        sensor.setSensorName(request.getSensorName());
-        sensor.setCategory(request.getSensorCategory());
-        sensor.setSensorMeta(metaJson);
-        sensor.setSensorApiKey(UUID.randomUUID().toString());
-
-        Sensor savedSensor = sensorRepository.save(sensor);
-
-        return SensorRegisterResponse.builder()
-                .id(savedSensor.getId())
-                .message(savedSensor.getSensorName())
-                .sensorApiKey(savedSensor.getSensorApiKey())
-                .build();
-    }
-    
-    @Override
-    @Transactional
-    public SensorRegisterResponse updateSensor(Integer id, SensorRegisterRequest request,
-                                                 String rawAuthorization) {
-    	
-    	Sensor sensor = sensorRepository.findById(id).orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
-
-        String companyApiKey = extractApiKey(rawAuthorization);
-
-        Company company = companyRepository.findByCompanyApiKey(companyApiKey)
-                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
-
-        Location location = locationRepository.findById(request.getLocationId())
-                .filter(loc -> loc.getCompany().getId().equals(company.getId()))
-                .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
-
-        String metaJson;
-        try {
-            metaJson = request.getSensorMeta() != null
-                    ? objectMapper.writeValueAsString(request.getSensorMeta())
-                    : "{}";
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error al convertir sensorMeta a JSON", e);
-        }
-        
-        sensor.setLocation(location);
-        sensor.setSensorName(request.getSensorName());
-        sensor.setCategory(request.getSensorCategory());
-        sensor.setSensorMeta(metaJson);        
-
-        Sensor savedSensor = sensorRepository.save(sensor);
-
-        return SensorRegisterResponse.builder()
-                .id(savedSensor.getId())
-                .message(savedSensor.getSensorName())
-                .sensorApiKey(savedSensor.getSensorApiKey())
-                .build();
+      sensorRepository.delete(sensor);
+      return;
     }
 
-    private String extractApiKey(String rawAuthorization) {
-        if (rawAuthorization == null || !rawAuthorization.startsWith("ApiKey ")) {
-            throw new RuntimeException("Missing or malformed Authorization header");
-        }
-        return rawAuthorization.replace("ApiKey ", "").trim();
+    String companyApiKey = extractApiKey(authorization);
+
+    Company company =
+        companyRepository
+            .findByCompanyApiKey(companyApiKey)
+            .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+
+    if (!sensor.getLocation().getCompany().getId().equals(company.getId())) {
+      throw new UnauthorizedException("This sensor does not belong to your company");
     }
 
-    private Company getAuthorizedCompany(String rawAuthorization) {
-        String companyApiKey = extractApiKey(rawAuthorization);
-        return companyRepository.findByCompanyApiKey(companyApiKey)
-                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    sensorRepository.delete(sensor);
+  }
+
+  @Override
+  @Transactional
+  public SensorRegisterResponse registerSensor(
+      SensorRegisterRequest request, String rawAuthorization) {
+
+    String companyApiKey = extractApiKey(rawAuthorization);
+
+    Company company =
+        companyRepository
+            .findByCompanyApiKey(companyApiKey)
+            .orElseThrow(
+                () -> new UnauthorizedException("Company not " + "found " + "or unauthorized"));
+
+    Location location =
+        locationRepository
+            .findById(request.getLocationId())
+            .filter(loc -> loc.getCompany().getId().equals(company.getId()))
+            .orElseThrow(() -> new UnauthorizedException("Invalid location for this " + "company"));
+
+    String metaJson;
+    try {
+      metaJson =
+          request.getSensorMeta() != null
+              ? objectMapper.writeValueAsString(request.getSensorMeta())
+              : "{}";
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Error al convertir sensorMeta a JSON", e);
     }
 
-    @Override
-    public Page<SensorResponse> findAllByLocationIdPageable(String rawAuthorization, Integer id, int pageIndex, int pageSize) {
-        String companyApiKey = extractApiKey(rawAuthorization);
+    Sensor sensor = new Sensor();
+    sensor.setLocation(location);
+    sensor.setSensorName(request.getSensorName());
+    sensor.setCategory(request.getSensorCategory());
+    sensor.setSensorMeta(metaJson);
+    sensor.setSensorApiKey(UUID.randomUUID().toString());
 
-        Company company = companyRepository.findByCompanyApiKey(companyApiKey)
-                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    Sensor savedSensor = sensorRepository.save(sensor);
 
-        Location location = locationRepository.findById(id)
-                .filter(loc -> loc.getCompany().getId().intValue() == company.getId().intValue())
-                .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
-
-        Pageable pageable = PageRequest.of(pageIndex, pageSize);
-
-        Page<Sensor> pages = sensorRepository.findByLocationId(location.getId(), pageable);
-
-        return pages.map(this::toDTO);
-    }
-
-    @Override
-	public List<SensorResponse> getAllSensors(String rawAuthorization, Integer companyId, int locationId) {
-    	String companyApiKey = extractApiKey(rawAuthorization);
-    	
-    	Company company = companyRepository.findByCompanyApiKey(companyApiKey)
-                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
-    	
-    	if (company.getId().intValue() != companyId.intValue()) {
-    		throw new UnauthorizedException("Company not found or unauthorized");
-    	}
-
-    	List<Integer> locationIds;
-
-    	if (locationId == -1) {
-    	    locationIds = locationRepository.findAllByCompanyId(companyId)
-    	            .orElse(Collections.emptyList())
-    	            .stream()
-    	            .map(Location::getId)
-    	            .collect(Collectors.toList());
-    	} else {
-    	    Location location = locationRepository.findById(locationId)
-    	            .filter(loc -> loc.getCompany().getId().equals(company.getId()))
-    	            .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
-    	    
-    	    locationIds = Collections.singletonList(location.getId());
-    	}
-        
-		return sensorRepository.findByLocationIdIn(locationIds).stream().map(this::toDTO).toList();
-	}
-	
-	private SensorResponse toDTO(Sensor sensor) {
-    	CompanyDTO companyDto = CompanyDTO.builder()
-    								.id(sensor.getLocation().getCompany().getId())
-    								.companyName(sensor.getLocation().getCompany().getCompanyName())
-    								.companyApiKey(sensor.getLocation().getCompany().getCompanyApiKey())
-    								.build();
-    	LocationDTO locationDto = LocationDTO.builder()
-        .id(sensor.getLocation().getId())
-        .company(companyDto)
-        .locationName(sensor.getLocation().getLocationName())
-        .locationCountry(sensor.getLocation().getLocationCountry())
-        .locationCity(sensor.getLocation().getLocationCity())
-        .locationMeta(sensor.getLocation().getLocationMeta())
+    return SensorRegisterResponse.builder()
+        .id(savedSensor.getId())
+        .message(savedSensor.getSensorName())
+        .sensorApiKey(savedSensor.getSensorApiKey())
         .build();
-    	
-    	SensorResponse sensorResponse = null;
-    	try {
-            Map<String, Object> meta = objectMapper.readValue(sensor.getSensorMeta(), new TypeReference<>() {});
-            
-            sensorResponse = SensorResponse.builder()
-            .id(sensor.getId())
-            .sensorName(sensor.getSensorName())
-            .sensorCategory(sensor.getCategory())
-            .sensorApiKey(sensor.getSensorApiKey())
-            .location(locationDto)
-            .sensorMeta(meta)
-            .build();
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error sensorMeta JSON", e);
-        }
-    	
-        return sensorResponse;
+  }
+
+  @Override
+  @Transactional
+  public SensorRegisterResponse updateSensor(
+      Integer id, SensorRegisterRequest request, String rawAuthorization) {
+
+    Sensor sensor =
+        sensorRepository
+            .findById(id)
+            .orElseThrow(() -> new NotFoundException("Sensor not found " + "with " + "id: " + id));
+
+    String companyApiKey = extractApiKey(rawAuthorization);
+
+    Company company =
+        companyRepository
+            .findByCompanyApiKey(companyApiKey)
+            .orElseThrow(
+                () -> new UnauthorizedException("Company not " + "found " + "or unauthorized"));
+
+    Location location =
+        locationRepository
+            .findById(request.getLocationId())
+            .filter(loc -> loc.getCompany().getId().equals(company.getId()))
+            .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
+
+    String metaJson;
+    try {
+      metaJson =
+          request.getSensorMeta() != null
+              ? objectMapper.writeValueAsString(request.getSensorMeta())
+              : "{}";
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Error al convertir sensorMeta a JSON", e);
     }
 
+    sensor.setLocation(location);
+    sensor.setSensorName(request.getSensorName());
+    sensor.setCategory(request.getSensorCategory());
+    sensor.setSensorMeta(metaJson);
+
+    Sensor savedSensor = sensorRepository.save(sensor);
+
+    return SensorRegisterResponse.builder()
+        .id(savedSensor.getId())
+        .message(savedSensor.getSensorName())
+        .sensorApiKey(savedSensor.getSensorApiKey())
+        .build();
+  }
+
+  private String extractApiKey(String rawAuthorization) {
+    if (rawAuthorization == null || !rawAuthorization.startsWith("ApiKey ")) {
+      throw new RuntimeException("Missing or malformed Authorization " + "header");
+    }
+    return rawAuthorization.replace("ApiKey ", "").trim();
+  }
+
+  private Company getAuthorizedCompany(String rawAuthorization) {
+    String companyApiKey = extractApiKey(rawAuthorization);
+    return companyRepository
+        .findByCompanyApiKey(companyApiKey)
+        .orElseThrow(
+            () -> new UnauthorizedException("Company not " + "found " + "or " + "unauthorized"));
+  }
+
+  @Override
+  public Page<SensorResponse> findAllByLocationIdPageable(
+      String rawAuthorization, Integer id, int pageIndex, int pageSize) {
+    String companyApiKey = extractApiKey(rawAuthorization);
+
+    Company company =
+        companyRepository
+            .findByCompanyApiKey(companyApiKey)
+            .orElseThrow(
+                () -> new UnauthorizedException("Company not " + "found " + "or unauthorized"));
+
+    Location location =
+        locationRepository
+            .findById(id)
+            .filter(loc -> loc.getCompany().getId().intValue() == company.getId().intValue())
+            .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
+
+    Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+    Page<Sensor> pages = sensorRepository.findByLocationId(location.getId(), pageable);
+
+    return pages.map(this::toDTO);
+  }
+
+  @Override
+  public List<SensorResponse> getAllSensors(
+      String rawAuthorization, Integer companyId, int locationId) {
+    String companyApiKey = extractApiKey(rawAuthorization);
+
+    Company company =
+        companyRepository
+            .findByCompanyApiKey(companyApiKey)
+            .orElseThrow(
+                () -> new UnauthorizedException("Company not " + "found " + "or unauthorized"));
+
+    if (company.getId().intValue() != companyId.intValue()) {
+      throw new UnauthorizedException("Company not found or " + "unauthorized");
+    }
+
+    List<Integer> locationIds;
+
+    if (locationId == -1) {
+      locationIds =
+          locationRepository.findAllByCompanyId(companyId).orElse(Collections.emptyList()).stream()
+              .map(Location::getId)
+              .collect(Collectors.toList());
+    } else {
+      Location location =
+          locationRepository
+              .findById(locationId)
+              .filter(loc -> loc.getCompany().getId().equals(company.getId()))
+              .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
+
+      locationIds = Collections.singletonList(location.getId());
+    }
+
+    return sensorRepository.findByLocationIdIn(locationIds).stream().map(this::toDTO).toList();
+  }
+
+  private SensorResponse toDTO(Sensor sensor) {
+    CompanyDTO companyDto =
+        CompanyDTO.builder()
+            .id(sensor.getLocation().getCompany().getId())
+            .companyName(sensor.getLocation().getCompany().getCompanyName())
+            .companyApiKey(sensor.getLocation().getCompany().getCompanyApiKey())
+            .build();
+    LocationDTO locationDto =
+        LocationDTO.builder()
+            .id(sensor.getLocation().getId())
+            .company(companyDto)
+            .locationName(sensor.getLocation().getLocationName())
+            .locationCountry(sensor.getLocation().getLocationCountry())
+            .locationCity(sensor.getLocation().getLocationCity())
+            .locationMeta(sensor.getLocation().getLocationMeta())
+            .build();
+
+    SensorResponse sensorResponse = null;
+    try {
+      Map<String, Object> meta =
+          objectMapper.readValue(sensor.getSensorMeta(), new TypeReference<>() {});
+
+      sensorResponse =
+          SensorResponse.builder()
+              .id(sensor.getId())
+              .sensorName(sensor.getSensorName())
+              .sensorCategory(sensor.getCategory())
+              .sensorApiKey(sensor.getSensorApiKey())
+              .location(locationDto)
+              .sensorMeta(meta)
+              .build();
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Error sensorMeta JSON", e);
+    }
+
+    return sensorResponse;
+  }
+
+  private boolean hasAdminRole() {
+    return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+        .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+  }
 }

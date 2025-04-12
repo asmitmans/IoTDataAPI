@@ -42,7 +42,8 @@ CREATE TABLE users (
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
     alias VARCHAR(20),
     names VARCHAR(100),
-    surnames VARCHAR(100)
+    surnames VARCHAR(100),
+    company_id INTEGER REFERENCES company(id) ON DELETE SET NULL
 );
 
 -- Tabla de roles

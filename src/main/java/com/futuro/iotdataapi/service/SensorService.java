@@ -22,4 +22,7 @@ public interface SensorService {
 	public SensorRegisterResponse updateSensor(Integer id, @Valid SensorRegisterRequest request, String authorization);
 
 	public SensorResponse findById(Integer id);
+
+	public void deleteSensor(Integer id, String authorization);
+
 }

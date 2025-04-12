@@ -6,9 +6,14 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.futuro.iotdataapi.util.JwtUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +35,8 @@ import com.futuro.iotdataapi.repository.LocationRepository;
 import com.futuro.iotdataapi.repository.SensorRepository;
 
 import jakarta.transaction.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Service
 public class SensorServiceImpl implements SensorService {
@@ -38,16 +45,19 @@ public class SensorServiceImpl implements SensorService {
   private final LocationRepository locationRepository;
   private final SensorRepository sensorRepository;
   private final ObjectMapper objectMapper;
+  private final JwtUtils jwtUtils;
 
   public SensorServiceImpl(
       CompanyRepository companyRepository,
       LocationRepository locationRepository,
       SensorRepository sensorRepository,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      JwtUtils jwtUtils) {
     this.companyRepository = companyRepository;
     this.locationRepository = locationRepository;
     this.sensorRepository = sensorRepository;
     this.objectMapper = objectMapper;
+    this.jwtUtils = jwtUtils;
   }
 
   @Override
@@ -92,6 +102,7 @@ public class SensorServiceImpl implements SensorService {
       SensorRegisterRequest request, String rawAuthorization) {
     Company company;
 
+    // ADMIN
     if (hasAdminRole()) {
       if (request.getCompanyId() == null) {
         throw new UnauthorizedException("Admin must provide companyId");
@@ -105,11 +116,21 @@ public class SensorServiceImpl implements SensorService {
                       new NotFoundException(
                           "Company not found with id: " + request.getCompanyId()));
     } else {
-      String companyApiKey = extractApiKey(rawAuthorization);
-      company =
-          companyRepository
-              .findByCompanyApiKey(companyApiKey)
-              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+      // API-KEY
+      if (rawAuthorization != null && rawAuthorization.startsWith("ApiKey ")) {
+        String companyApiKey = extractApiKey(rawAuthorization);
+        company =
+            companyRepository
+                .findByCompanyApiKey(companyApiKey)
+                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+      } else {
+        // JWT
+        Integer companyId = extractCompanyIdFromJwtToken();
+        company =
+            companyRepository
+                .findById(companyId)
+                .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+      }
     }
 
     Location location =
@@ -307,5 +328,28 @@ public class SensorServiceImpl implements SensorService {
   private boolean hasAdminRole() {
     return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
         .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+  }
+
+  private Integer extractCompanyIdFromJwtToken() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new UnauthorizedException("No authenticated user");
+    }
+
+    String token = extractBearerToken(); // creamos esta función abajo
+    DecodedJWT decodedJWT = jwtUtils.validateToken(token);
+    return decodedJWT.getClaim("companyId").asInt();
+  }
+
+  private String extractBearerToken() {
+    HttpServletRequest request =
+        ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+    String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+      throw new UnauthorizedException("No JWT token found in Authorization header");
+    }
+
+    return authHeader.substring(7); // remover "Bearer "
   }
 }

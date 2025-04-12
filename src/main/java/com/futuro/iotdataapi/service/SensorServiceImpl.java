@@ -72,7 +72,8 @@ public class SensorServiceImpl implements SensorService {
   @Override
   @Transactional
   public void deleteSensor(Integer id, String authorization) {
-    Sensor sensor = sensorRepository
+    Sensor sensor =
+        sensorRepository
             .findById(id)
             .orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
 
@@ -86,14 +87,17 @@ public class SensorServiceImpl implements SensorService {
     if (authorization != null && authorization.startsWith("ApiKey ")) {
       // API KEY
       String companyApiKey = extractApiKey(authorization);
-      company = companyRepository
+      company =
+          companyRepository
               .findByCompanyApiKey(companyApiKey)
               .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
     } else {
       // JWT (usuario autenticado)
       Integer companyId = extractCompanyIdFromJwtToken();
-      company = companyRepository.findById(companyId)
-                                 .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+      company =
+          companyRepository
+              .findById(companyId)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
     }
 
     if (!sensor.getLocation().getCompany().getId().equals(company.getId())) {
@@ -180,22 +184,50 @@ public class SensorServiceImpl implements SensorService {
     Sensor sensor =
         sensorRepository
             .findById(id)
-            .orElseThrow(() -> new NotFoundException("Sensor not found " + "with " + "id: " + id));
+            .orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
 
-    String companyApiKey = extractApiKey(rawAuthorization);
+    Company company;
 
-    Company company =
-        companyRepository
-            .findByCompanyApiKey(companyApiKey)
-            .orElseThrow(
-                () -> new UnauthorizedException("Company not " + "found " + "or unauthorized"));
+    if (hasAdminRole()) {
+      if (request.getCompanyId() == null) {
+        throw new UnauthorizedException("Admin must provide companyId");
+      }
 
+      company =
+          companyRepository
+              .findById(request.getCompanyId())
+              .orElseThrow(
+                  () ->
+                      new NotFoundException(
+                          "Company not found with id: " + request.getCompanyId()));
+
+    } else if (rawAuthorization != null && rawAuthorization.startsWith("ApiKey ")) {
+      // API Key
+      String companyApiKey = extractApiKey(rawAuthorization);
+      company =
+          companyRepository
+              .findByCompanyApiKey(companyApiKey)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+
+    } else {
+      // JWT
+      Integer companyId = extractCompanyIdFromJwtToken();
+      company =
+          companyRepository
+              .findById(companyId)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    }
+
+    if (!sensor.getLocation().getCompany().getId().equals(company.getId())) {
+      throw new UnauthorizedException("This sensor does not belong to your company");
+    }
+
+    // Validar que la nueva location pertenezca a esa compañía también
     Location location =
         locationRepository
             .findById(request.getLocationId())
             .filter(loc -> loc.getCompany().getId().equals(company.getId()))
             .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
-
     String metaJson;
     try {
       metaJson =

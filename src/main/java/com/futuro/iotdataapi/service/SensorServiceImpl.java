@@ -201,26 +201,36 @@ public class SensorServiceImpl implements SensorService {
 
   @Override
   public Page<SensorResponse> findAllByLocationIdPageable(
-      String rawAuthorization, Integer id, int pageIndex, int pageSize) {
-    String companyApiKey = extractApiKey(rawAuthorization);
+      String rawAuthorization, Integer locationId, int pageIndex, int pageSize) {
+    Company company;
 
-    Company company =
-        companyRepository
-            .findByCompanyApiKey(companyApiKey)
-            .orElseThrow(
-                () -> new UnauthorizedException("Company not " + "found " + "or unauthorized"));
+    if (hasAdminRole()) {
+      Pageable pageable = PageRequest.of(pageIndex, pageSize);
+      return sensorRepository.findByLocationId(locationId, pageable).map(this::toDTO);
+    }
+
+    if (rawAuthorization != null && rawAuthorization.startsWith("ApiKey ")) {
+      String companyApiKey = extractApiKey(rawAuthorization);
+      company =
+          companyRepository
+              .findByCompanyApiKey(companyApiKey)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    } else {
+      Integer companyId = extractCompanyIdFromJwtToken();
+      company =
+          companyRepository
+              .findById(companyId)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    }
 
     Location location =
         locationRepository
-            .findById(id)
-            .filter(loc -> loc.getCompany().getId().intValue() == company.getId().intValue())
+            .findById(locationId)
+            .filter(loc -> loc.getCompany().getId().equals(company.getId()))
             .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
 
     Pageable pageable = PageRequest.of(pageIndex, pageSize);
-
-    Page<Sensor> pages = sensorRepository.findByLocationId(location.getId(), pageable);
-
-    return pages.map(this::toDTO);
+    return sensorRepository.findByLocationId(location.getId(), pageable).map(this::toDTO);
   }
 
   @Override

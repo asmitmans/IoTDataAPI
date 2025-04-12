@@ -68,7 +68,6 @@ public class SensorServiceImpl implements SensorService {
             .orElseThrow(() -> new NotFoundException("Sensor not found with id: " + id));
 
     if (hasAdminRole()) {
-
       sensorRepository.delete(sensor);
       return;
     }
@@ -91,20 +90,33 @@ public class SensorServiceImpl implements SensorService {
   @Transactional
   public SensorRegisterResponse registerSensor(
       SensorRegisterRequest request, String rawAuthorization) {
+    Company company;
 
-    String companyApiKey = extractApiKey(rawAuthorization);
+    if (hasAdminRole()) {
+      if (request.getCompanyId() == null) {
+        throw new UnauthorizedException("Admin must provide companyId");
+      }
 
-    Company company =
-        companyRepository
-            .findByCompanyApiKey(companyApiKey)
-            .orElseThrow(
-                () -> new UnauthorizedException("Company not " + "found " + "or unauthorized"));
+      company =
+          companyRepository
+              .findById(request.getCompanyId())
+              .orElseThrow(
+                  () ->
+                      new NotFoundException(
+                          "Company not found with id: " + request.getCompanyId()));
+    } else {
+      String companyApiKey = extractApiKey(rawAuthorization);
+      company =
+          companyRepository
+              .findByCompanyApiKey(companyApiKey)
+              .orElseThrow(() -> new UnauthorizedException("Company not found or unauthorized"));
+    }
 
     Location location =
         locationRepository
             .findById(request.getLocationId())
             .filter(loc -> loc.getCompany().getId().equals(company.getId()))
-            .orElseThrow(() -> new UnauthorizedException("Invalid location for this " + "company"));
+            .orElseThrow(() -> new UnauthorizedException("Invalid location for this company"));
 
     String metaJson;
     try {
@@ -113,7 +125,7 @@ public class SensorServiceImpl implements SensorService {
               ? objectMapper.writeValueAsString(request.getSensorMeta())
               : "{}";
     } catch (JsonProcessingException e) {
-      throw new RuntimeException("Error al convertir sensorMeta a JSON", e);
+      throw new RuntimeException("Error converting sensorMeta to JSON", e);
     }
 
     Sensor sensor = new Sensor();

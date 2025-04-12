@@ -9,6 +9,8 @@ import java.util.Map;
 @Data
 public class SensorRegisterRequest {
 
+    private Integer companyId; // Solo requerido por admin
+
     @NotNull
     private Integer locationId;
 

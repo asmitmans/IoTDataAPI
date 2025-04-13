@@ -20,7 +20,7 @@ public class SensorData {
     @JoinColumn(name = "sensor_id", nullable = false)
     private Sensor sensor;
 
-    @Column(name = "timestamp_ms", nullable = false)
+    @Column(name = "timestamp_s", nullable = false)
     private Long timestamp;
 
     @Column(name = "value_name", nullable = false, length = 50)

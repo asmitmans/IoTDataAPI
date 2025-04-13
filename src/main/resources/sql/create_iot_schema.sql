@@ -29,7 +29,7 @@ CREATE TABLE sensor (
 CREATE TABLE sensor_data (
     id SERIAL PRIMARY KEY,
     sensor_id INTEGER NOT NULL REFERENCES sensor(id) ON DELETE CASCADE,
-    timestamp_ms BIGINT NOT NULL,
+    timestamp_s BIGINT NOT NULL,
     value_name VARCHAR(50) NOT NULL,
     value DOUBLE PRECISION NOT NULL
 );

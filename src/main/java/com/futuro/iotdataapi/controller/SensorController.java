@@ -20,81 +20,76 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/sensors")
 @Tag(name = "Sensors resource")
 public class SensorController {
-	
-	private static final String PAGE_DEFAULT_SIZE = "7";
-	private static final String LOCATION_DEFAULT = "-1";
 
-    private final SensorService sensorService;
+  private static final String PAGE_DEFAULT_SIZE = "7";
+  private static final String LOCATION_DEFAULT = "-1";
 
-    public SensorController(SensorService sensorService) {
-        this.sensorService = sensorService;
-    }
+  private final SensorService sensorService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<SensorResponse> getSensorById(
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
-            @PathVariable Integer id) {
+  public SensorController(SensorService sensorService) {
+    this.sensorService = sensorService;
+  }
 
-        return ResponseEntity.ok(sensorService.getSensorById(id, authorization));
-    }
+  @GetMapping("/{id}")
+  public ResponseEntity<SensorResponse> getSensorById(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @PathVariable Integer id) {
 
-    @GetMapping
-    public ResponseEntity<List<SensorResponse>> getSensorsFromContext(
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
-        return ResponseEntity.ok(sensorService.getAllSensors(authorization));
-    }
+    return ResponseEntity.ok(sensorService.getSensorById(id, authorization));
+  }
 
+  @GetMapping
+  public ResponseEntity<List<SensorResponse>> getAllSensors(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
+    return ResponseEntity.ok(sensorService.getAllSensors(authorization));
+  }
 
+  @PostMapping
+  public ResponseEntity<SensorRegisterResponse> registerSensor(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
+      @RequestBody @Valid SensorRegisterRequest request) {
 
-    @PostMapping
-    public ResponseEntity<SensorRegisterResponse> registerSensor(
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
-            @RequestBody @Valid SensorRegisterRequest request) {
+    SensorRegisterResponse response = sensorService.registerSensor(request, authorization);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
 
-        SensorRegisterResponse response = sensorService.registerSensor(request, authorization);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-    
-    @PutMapping("/{id}")
-	public ResponseEntity<SensorRegisterResponse> updateCompany(
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
-            @PathVariable Integer id,
-            @RequestBody @Valid SensorRegisterRequest request) {
+  @PutMapping("/{id}")
+  public ResponseEntity<SensorRegisterResponse> updateSensor(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
+      @PathVariable Integer id,
+      @RequestBody @Valid SensorRegisterRequest request) {
 
-    	SensorRegisterResponse response = sensorService.updateSensor(id, request, authorization);
-    	return ResponseEntity.ok(response);
-	}
-    
-    @GetMapping("/location/{id}")
-    public ResponseEntity<Page<SensorResponse>> findAllByLocationId(
-    		@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, 
-    		@PathVariable Integer id,
-    		@RequestParam("page") int pageIndex,
-			@RequestParam(value = "size", required = false, 
-			defaultValue = PAGE_DEFAULT_SIZE) int pageSize) {
-    	
-    	Page<SensorResponse> pageDto = sensorService.findAllByLocationIdPageable(authorization, id, pageIndex, pageSize);
+    SensorRegisterResponse response = sensorService.updateSensor(id, request, authorization);
+    return ResponseEntity.ok(response);
+  }
 
-		return ResponseEntity.ok(pageDto);
-    }
-    
-    @GetMapping("/company/{companyId}")
-    public ResponseEntity<List<SensorResponse>> getAllSensorsByCompany(
-    		@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, 
-    		@PathVariable Integer companyId,
-    		@RequestParam(value = "location", required = false, 
-			defaultValue = LOCATION_DEFAULT) int locationId) {
-        return ResponseEntity.ok(sensorService.getAllSensorsByCompany(authorization, companyId, locationId));
-    }
+  @GetMapping("/location/{id}")
+  public ResponseEntity<Page<SensorResponse>> findAllByLocationId(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
+      @PathVariable Integer id,
+      @RequestParam("page") int pageIndex,
+      @RequestParam(value = "size", required = false, defaultValue = PAGE_DEFAULT_SIZE)
+          int pageSize) {
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSensor(
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
-            @PathVariable Integer id) {
+    Page<SensorResponse> pageDto =
+        sensorService.findAllByLocationIdPageable(authorization, id, pageIndex, pageSize);
+    return ResponseEntity.ok(pageDto);
+  }
 
-        sensorService.deleteSensor(id, authorization);
-        return ResponseEntity.noContent().build();
-    }
+  @GetMapping("/company/{companyId}")
+  public ResponseEntity<List<SensorResponse>> getAllSensorsByCompany(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
+      @PathVariable Integer companyId,
+      @RequestParam(value = "location", required = false, defaultValue = LOCATION_DEFAULT)
+          int locationId) {
+    return ResponseEntity.ok(
+        sensorService.getAllSensorsByCompany(authorization, companyId, locationId));
+  }
 
-    
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteSensor(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @PathVariable Integer id) {
+
+    sensorService.deleteSensor(id, authorization);
+    return ResponseEntity.noContent().build();
+  }
 }

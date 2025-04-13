@@ -10,7 +10,7 @@ import com.futuro.iotdataapi.service.SensorDataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Service
+@Service("ConsumerService")
 @RequiredArgsConstructor
 @Slf4j
 public class ConsumerService {

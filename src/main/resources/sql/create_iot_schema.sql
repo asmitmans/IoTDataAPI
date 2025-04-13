@@ -117,7 +117,7 @@ INSERT INTO menu_role (id_menu, id_role) VALUES (3, 1);
 INSERT INTO menu_role (id_menu, id_role) VALUES (4, 1);
 INSERT INTO menu_role (id_menu, id_role) VALUES (5, 1);
 
--- crear user con rol USER
+-- crear user con rol  USER
 -- Nota su password es: testuser
 INSERT INTO users (username, password, enabled, company_id)
 VALUES (

@@ -59,7 +59,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/sensors/**")
                     .hasAnyRole("COMPANY", "ADMIN", "USER")
                     .requestMatchers(HttpMethod.GET, "/api/v1/sensor_data")
-                    .hasAnyRole("COMPANY", "ADMIN")
+                    .hasAnyRole("COMPANY", "ADMIN", "USER")
                     .requestMatchers(HttpMethod.POST, "/api/v1/sensor_data")
                     .hasRole("SENSOR")
                     .anyRequest()

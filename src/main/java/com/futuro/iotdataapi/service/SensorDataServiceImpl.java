@@ -113,20 +113,10 @@ public class SensorDataServiceImpl implements SensorDataService {
   public SensorDataResponse toDTO(SensorData sensorData) {
     return SensorDataResponse.builder()
         .id(sensorData.getId())
-        .sensor(toSensorResponse(sensorData.getSensor()))
+        .sensorId(sensorData.getSensor().getId())
         .timestamp(sensorData.getTimestamp())
         .valueName(sensorData.getValueName())
         .value(sensorData.getValue())
-        .build();
-  }
-
-  public SensorResponse toSensorResponse(Sensor sensor) {
-    return SensorResponse.builder()
-        .id(sensor.getId())
-        .sensorName(sensor.getSensorName())
-        .sensorCategory(sensor.getCategory())
-        .sensorApiKey(sensor.getSensorApiKey())
-        // .sensorMeta(sensor.getSensorMeta())
         .build();
   }
 

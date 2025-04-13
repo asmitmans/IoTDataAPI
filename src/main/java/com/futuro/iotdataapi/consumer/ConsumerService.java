@@ -10,10 +10,10 @@ import com.futuro.iotdataapi.service.SensorDataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Service("ConsumerService")
+@Service
 @RequiredArgsConstructor
 @Slf4j
-public class ConsumerServiceImpl {
+public class ConsumerService {
 
 	private final String API_KEY = "ApiKey ";
 

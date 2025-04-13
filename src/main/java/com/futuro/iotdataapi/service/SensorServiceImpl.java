@@ -308,74 +308,28 @@ public class SensorServiceImpl implements SensorService {
   }
 
   private SensorResponse toDTO(Sensor sensor) {
-    CompanyDTO companyDto =
-        CompanyDTO.builder()
-            .id(sensor.getLocation().getCompany().getId())
-            .companyName(sensor.getLocation().getCompany().getCompanyName())
-            .companyApiKey(sensor.getLocation().getCompany().getCompanyApiKey())
-            .build();
-    LocationDTO locationDto =
-        LocationDTO.builder()
-            .id(sensor.getLocation().getId())
-            .company(companyDto)
-            .locationName(sensor.getLocation().getLocationName())
-            .locationCountry(sensor.getLocation().getLocationCountry())
-            .locationCity(sensor.getLocation().getLocationCity())
-            .locationMeta(sensor.getLocation().getLocationMeta())
-            .build();
-
-    SensorResponse sensorResponse = null;
+    Map<String, Object> meta;
     try {
-      Map<String, Object> meta =
-          objectMapper.readValue(sensor.getSensorMeta(), new TypeReference<>() {});
-
-      sensorResponse =
-          SensorResponse.builder()
-              .id(sensor.getId())
-              .sensorName(sensor.getSensorName())
-              .sensorCategory(sensor.getCategory())
-              .sensorApiKey(sensor.getSensorApiKey())
-              .location(locationDto)
-              .sensorMeta(meta)
-              .build();
+      meta =
+          sensor.getSensorMeta() != null
+              ? objectMapper.readValue(sensor.getSensorMeta(), new TypeReference<>() {})
+              : Map.of();
     } catch (JsonProcessingException e) {
-      throw new RuntimeException("Error sensorMeta JSON", e);
+      throw new RuntimeException("Error parsing sensorMeta JSON", e);
     }
-    return sensorResponse;
+
+    return SensorResponse.builder()
+        .id(sensor.getId())
+        .sensorName(sensor.getSensorName())
+        .sensorCategory(sensor.getCategory())
+        .sensorApiKey(sensor.getSensorApiKey())
+        .sensorMeta(meta)
+        .locationId(sensor.getLocation().getId())
+        .build();
   }
 
   private boolean hasAdminRole() {
     return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
         .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-  }
-
-  private Integer extractCompanyIdFromJwtToken() {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || !authentication.isAuthenticated()) {
-      throw new UnauthorizedException("No authenticated user");
-    }
-
-    String token = extractBearerToken(); // creamos esta función abajo
-    DecodedJWT decodedJWT = jwtUtils.validateToken(token);
-    return decodedJWT.getClaim("companyId").asInt();
-  }
-
-  private String extractBearerToken() {
-    HttpServletRequest request =
-        ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-    String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      throw new UnauthorizedException("No JWT token found in Authorization header");
-    }
-
-    return authHeader.substring(7); // remover "Bearer "
-  }
-
-  private String extractApiKey(String rawAuthorization) {
-    if (rawAuthorization == null || !rawAuthorization.startsWith("ApiKey ")) {
-      throw new RuntimeException("Missing or malformed Authorization " + "header");
-    }
-    return rawAuthorization.replace("ApiKey ", "").trim();
   }
 }

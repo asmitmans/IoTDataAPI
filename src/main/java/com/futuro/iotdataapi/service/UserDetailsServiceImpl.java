@@ -2,6 +2,7 @@ package com.futuro.iotdataapi.service;
 
 import com.futuro.iotdataapi.dto.AuthLoginRequest;
 import com.futuro.iotdataapi.dto.AuthResponse;
+import com.futuro.iotdataapi.dto.SensorCategoryDto;
 import com.futuro.iotdataapi.entity.User;
 import com.futuro.iotdataapi.repository.UserRepository;
 import com.futuro.iotdataapi.util.JwtUtils;
@@ -15,6 +16,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -68,4 +70,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                         .collect(Collectors.toList()))
                 .build();
     }
+
+    public long getActiveUsersCount() {
+		return userRepository.countByEnabledTrue();
+	}
 }

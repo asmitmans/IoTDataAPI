@@ -1,27 +1,32 @@
 package com.futuro.iotdataapi.service;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import com.futuro.iotdataapi.util.CompanyResolver;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.futuro.iotdataapi.dto.SensorCategoryKpiDto;
 import com.futuro.iotdataapi.dto.SensorDataResponse;
 import com.futuro.iotdataapi.dto.SensorDataUploadRequest;
 import com.futuro.iotdataapi.dto.SensorDataUploadResponse;
-import com.futuro.iotdataapi.dto.SensorResponse;
 import com.futuro.iotdataapi.entity.Company;
 import com.futuro.iotdataapi.entity.Sensor;
 import com.futuro.iotdataapi.entity.SensorData;
 import com.futuro.iotdataapi.exception.UnauthorizedException;
-import com.futuro.iotdataapi.repository.CompanyRepository;
 import com.futuro.iotdataapi.repository.SensorDataRepository;
 import com.futuro.iotdataapi.repository.SensorRepository;
+import com.futuro.iotdataapi.util.CompanyResolver;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -171,4 +176,38 @@ public class SensorDataServiceImpl implements SensorDataService {
     return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
         .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
   }
+  
+  @Override
+  public List<SensorCategoryKpiDto> getCategoryKpisForLocation(Integer locationId) {
+	    long oneDayAgo = (System.currentTimeMillis() - Duration.ofDays(1).toMillis())/1000;
+	    List<SensorData> data = sensorDataRepository.findByLocationAndRecent(locationId, oneDayAgo);
+
+	    return data.stream()
+	        .collect(Collectors.groupingBy(sd -> sd.getSensor().getCategory()))
+	        .entrySet().stream()
+	        .map(entry -> {
+	            String category = entry.getKey();
+	            List<SensorData> group = entry.getValue();
+
+	            SensorData last = group.stream()
+	                .max(Comparator.comparingLong(SensorData::getTimestamp))
+	                .orElse(null);
+
+	            return SensorCategoryKpiDto.builder()
+	                .category(category)
+	                .lastValue(last != null ? last.getValue() : null)
+	                .lastTimestamp(last != null ? toLocalDateTime(last.getTimestamp()) : null)
+	                .minValue(group.stream().mapToDouble(SensorData::getValue).min().orElse(0))
+	                .maxValue(group.stream().mapToDouble(SensorData::getValue).max().orElse(0))
+	                .averageValue(group.stream().mapToDouble(SensorData::getValue).average().orElse(0))
+	                .totalReadings((long) group.size())
+	                .build();
+	        }).toList();
+	}
+  
+  private LocalDateTime toLocalDateTime(Long ts) {
+	    return Instant.ofEpochMilli(ts).atZone(ZoneId.systemDefault()).toLocalDateTime();
+	}
+
+
 }

@@ -4,25 +4,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
-import com.futuro.iotdataapi.util.CompanyResolver;
-import com.futuro.iotdataapi.util.JwtUtils;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.futuro.iotdataapi.dto.CompanyDTO;
-import com.futuro.iotdataapi.dto.LocationDTO;
+import com.futuro.iotdataapi.dto.SensorCategoryDto;
 import com.futuro.iotdataapi.dto.SensorRegisterRequest;
 import com.futuro.iotdataapi.dto.SensorRegisterResponse;
 import com.futuro.iotdataapi.dto.SensorResponse;
@@ -34,10 +26,10 @@ import com.futuro.iotdataapi.exception.UnauthorizedException;
 import com.futuro.iotdataapi.repository.CompanyRepository;
 import com.futuro.iotdataapi.repository.LocationRepository;
 import com.futuro.iotdataapi.repository.SensorRepository;
+import com.futuro.iotdataapi.util.CompanyResolver;
+import com.futuro.iotdataapi.util.JwtUtils;
 
 import jakarta.transaction.Transactional;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Service
 public class SensorServiceImpl implements SensorService {
@@ -331,5 +323,9 @@ public class SensorServiceImpl implements SensorService {
   private boolean hasAdminRole() {
     return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
         .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+  }
+  
+  public List<SensorCategoryDto> getSensorCategoriesWithCount() {
+      return sensorRepository.findSensorCategoriesWithCount();
   }
 }

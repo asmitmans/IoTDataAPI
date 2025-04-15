@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 
+import com.futuro.iotdataapi.dto.SensorCategoryDto;
 import com.futuro.iotdataapi.dto.SensorRegisterRequest;
 import com.futuro.iotdataapi.dto.SensorRegisterResponse;
 import com.futuro.iotdataapi.dto.SensorResponse;
@@ -28,4 +29,6 @@ public interface SensorService {
       Integer id, @Valid SensorRegisterRequest request, String authorization);
 
   void deleteSensor(Integer id, String authorization);
+
+  List<SensorCategoryDto> getSensorCategoriesWithCount();
 }

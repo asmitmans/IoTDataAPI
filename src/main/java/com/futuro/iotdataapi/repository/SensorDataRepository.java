@@ -21,4 +21,19 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Integer>
             @Param("toEpoch") long toEpoch,
             Pageable pageable);
 	
+	
+	@Query("""
+		    SELECT sd FROM SensorData sd
+		    JOIN FETCH sd.sensor s
+		    JOIN FETCH s.location l
+		    WHERE l.id = :locationId
+		      AND s.category IS NOT NULL
+		      AND sd.timestamp >= :startTimestamp
+		""")
+		List<SensorData> findByLocationAndRecent(
+		    @Param("locationId") Integer locationId,
+		    @Param("startTimestamp") Long startTimestamp
+		);
+
+	
 }

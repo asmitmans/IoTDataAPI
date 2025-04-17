@@ -14,5 +14,5 @@ public class SensorResponse {
 	private String sensorCategory;
 	private String sensorApiKey;
 	private Map<String, Object> sensorMeta;
-	private LocationDTO location;
+	private Integer locationId;
 }

@@ -8,7 +8,7 @@ import lombok.Data;
 public class SensorDataResponse {
 
 	private Integer id;
-    private SensorResponse sensor;
+    private Integer sensorId;
     private Long timestamp;
     private String valueName;
     private Double value;

@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.futuro.iotdataapi.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,54 +20,65 @@ import java.util.stream.Collectors;
 @Component
 public class JwtUtils {
 
-    @Value("${security.jwt.key.private}")
-    private String privateKey;
+  private final UserRepository userRepository;
 
-    @Value("${security.jwt.user.generator}")
-    private String userGenerator;
+  @Value("${security.jwt.key.private}")
+  private String privateKey;
 
-    @Value("${security.jwt.expiration_time}")
-    private Long expirationTime;
+  @Value("${security.jwt.user.generator}")
+  private String userGenerator;
 
-    public String createToken(Authentication authentication) {
-        Algorithm algorithm = Algorithm.HMAC256(this.privateKey);
-        String username = authentication.getPrincipal().toString();
-        String authorities = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
+  @Value("${security.jwt.expiration_time}")
+  private Long expirationTime;
 
-        return JWT.create()
-                .withIssuer(this.userGenerator)
-                .withSubject(username)
-                .withClaim("authorities", authorities)
-                .withIssuedAt(new Date())
-                .withExpiresAt(new Date(System.currentTimeMillis() + expirationTime))
-                .withJWTId(UUID.randomUUID().toString())
-                .sign(algorithm);
+  public JwtUtils(UserRepository userRepository) {
+    this.userRepository = userRepository;
+  }
+
+  public String createToken(Authentication authentication) {
+    Algorithm algorithm = Algorithm.HMAC256(this.privateKey);
+    String username = authentication.getPrincipal().toString();
+    String authorities =
+        authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.joining(","));
+
+    Integer companyId =
+        userRepository
+            .findByUsername(username)
+            .map(user -> user.getCompany() != null ? user.getCompany().getId() : null)
+            .orElse(null);
+
+    return JWT.create()
+        .withIssuer(this.userGenerator)
+        .withSubject(username)
+        .withClaim("authorities", authorities)
+        .withClaim("companyId", companyId)
+        .withIssuedAt(new Date())
+        .withExpiresAt(new Date(System.currentTimeMillis() + expirationTime))
+        .withJWTId(UUID.randomUUID().toString())
+        .sign(algorithm);
+  }
+
+  public DecodedJWT validateToken(String token) {
+    try {
+      Algorithm algorithm = Algorithm.HMAC256(this.privateKey);
+      JWTVerifier jwtVerifier = JWT.require(algorithm).withIssuer(this.userGenerator).build();
+      return jwtVerifier.verify(token);
+    } catch (JWTVerificationException e) {
+      throw new JWTVerificationException("Token inválido o expirado");
     }
+  }
 
-    public DecodedJWT validateToken(String token) {
-        try {
-            Algorithm algorithm = Algorithm.HMAC256(this.privateKey);
-            JWTVerifier jwtVerifier = JWT.require(algorithm)
-                    .withIssuer(this.userGenerator)
-                    .build();
-            return jwtVerifier.verify(token);
-        } catch (JWTVerificationException e) {
-            throw new JWTVerificationException("Token inválido o expirado");
-        }
-    }
+  public String extractUsername(DecodedJWT decodedJWT) {
+    return decodedJWT.getSubject();
+  }
 
-    public String extractUsername(DecodedJWT decodedJWT) {
-        return decodedJWT.getSubject();
-    }
+  public Claim getSpecificClaim(DecodedJWT decodedJWT, String nameClaim) {
+    return decodedJWT.getClaim(nameClaim);
+  }
 
-    public Claim getSpecificClaim(DecodedJWT decodedJWT, String nameClaim) {
-        return decodedJWT.getClaim(nameClaim);
-    }
-
-    public Map<String, Claim> getClaims(DecodedJWT decodedJWT) {
-        return decodedJWT.getClaims();
-    }
-
+  public Map<String, Claim> getClaims(DecodedJWT decodedJWT) {
+    return decodedJWT.getClaims();
+  }
 }

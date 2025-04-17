@@ -80,6 +80,8 @@ public class LocationServiceImpl implements LocationService {
 
 	@Override
     public void delete(Integer id) {
+		locationRepository.findById(id).orElseThrow(() -> new NotFoundException("Location not found with id: " + id));
+		
         locationRepository.deleteById(id);
     }
 	

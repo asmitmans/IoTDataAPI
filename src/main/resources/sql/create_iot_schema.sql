@@ -29,7 +29,7 @@ CREATE TABLE sensor (
 CREATE TABLE sensor_data (
     id SERIAL PRIMARY KEY,
     sensor_id INTEGER NOT NULL REFERENCES sensor(id) ON DELETE CASCADE,
-    timestamp_ms BIGINT NOT NULL,
+    timestamp_s BIGINT NOT NULL,
     value_name VARCHAR(50) NOT NULL,
     value DOUBLE PRECISION NOT NULL
 );
@@ -42,7 +42,8 @@ CREATE TABLE users (
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
     alias VARCHAR(20),
     names VARCHAR(100),
-    surnames VARCHAR(100)
+    surnames VARCHAR(100),
+    company_id INTEGER REFERENCES company(id) ON DELETE SET NULL
 );
 
 -- Tabla de roles
@@ -115,3 +116,23 @@ INSERT INTO menu_role (id_menu, id_role) VALUES (2, 1);
 INSERT INTO menu_role (id_menu, id_role) VALUES (3, 1);
 INSERT INTO menu_role (id_menu, id_role) VALUES (4, 1);
 INSERT INTO menu_role (id_menu, id_role) VALUES (5, 1);
+
+-- crear user con rol  USER
+-- Nota su password es: testuser
+INSERT INTO users (username, password, enabled, company_id)
+VALUES (
+    'testuser',
+    '$2y$10$UGGZSJ1rZj6Fj6xitaZ2D.v8tNixiqcxWfMtxCcXlfH4vxivV9a16',
+    true,
+    1
+);
+
+INSERT INTO roles (name)
+VALUES ('USER')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id
+FROM users u, roles r
+WHERE u.username = 'testuser' AND r.name = 'USER';
+

@@ -64,6 +64,8 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public void delete(Integer id) {
+    	companyRepository.findById(id).orElseThrow(() -> new NotFoundException("Company not found with id: " + id));
+    	
         companyRepository.deleteById(id);
     }
     

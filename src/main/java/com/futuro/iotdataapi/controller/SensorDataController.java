@@ -26,37 +26,38 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1/sensor_data")
 @Tag(name = "Sensor Data resource")
 public class SensorDataController {
-	
-	private static final String PAGE_DEFAULT_SIZE = "7";
 
-    private final SensorDataService sensorDataService;
+  private static final String PAGE_DEFAULT_SIZE = "7";
 
-    public SensorDataController(SensorDataService sensorDataService) {
-        this.sensorDataService = sensorDataService;
-    }
+  private final SensorDataService sensorDataService;
 
-    @PostMapping
-    public ResponseEntity<SensorDataUploadResponse> receiveSensorData(
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
-            @Valid @RequestBody SensorDataUploadRequest request) {
+  public SensorDataController(SensorDataService sensorDataService) {
+    this.sensorDataService = sensorDataService;
+  }
 
-        SensorDataUploadResponse response =
-                sensorDataService.receiveSensorData(request, authorization);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+  @PostMapping
+  public ResponseEntity<SensorDataUploadResponse> receiveSensorData(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
+      @Valid @RequestBody SensorDataUploadRequest request) {
 
-    @GetMapping
-    public ResponseEntity<Page<SensorDataResponse>> getSensorData(
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
-            @RequestParam("from") long fromEpoch,
-            @RequestParam("to") long toEpoch,
-            @RequestParam("sensor_id") List<Integer> sensorIds,
-            @RequestParam("page") int pageIndex,
-			@RequestParam(value = "size", required = false, 
-			defaultValue = PAGE_DEFAULT_SIZE) int pageSize) {
-                
-        Page<SensorDataResponse> pageDto = sensorDataService.findAllByLocationIdPageable(authorization, fromEpoch, toEpoch, sensorIds, pageIndex, pageSize);
+    SensorDataUploadResponse response = sensorDataService.receiveSensorData(request, authorization);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
 
-		return ResponseEntity.ok(pageDto);
-    }
+  @GetMapping
+  public ResponseEntity<Page<SensorDataResponse>> getSensorData(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
+      @RequestParam("from") long fromEpoch,
+      @RequestParam("to") long toEpoch,
+      @RequestParam("sensor_id") List<Integer> sensorIds,
+      @RequestParam("page") int pageIndex,
+      @RequestParam(value = "size", required = false, defaultValue = PAGE_DEFAULT_SIZE)
+          int pageSize) {
+
+    Page<SensorDataResponse> pageDto =
+        sensorDataService.findAllByLocationIdPageable(
+            authorization, fromEpoch, toEpoch, sensorIds, pageIndex, pageSize);
+
+    return ResponseEntity.ok(pageDto);
+  }
 }

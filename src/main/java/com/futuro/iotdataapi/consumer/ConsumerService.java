@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service("ConsumerService")
 @RequiredArgsConstructor
 @Slf4j
-public class ConsumerServiceImpl {
+public class ConsumerService {
 
 	private final String API_KEY = "ApiKey ";
 

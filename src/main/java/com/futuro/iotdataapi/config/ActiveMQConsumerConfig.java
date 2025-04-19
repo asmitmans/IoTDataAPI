@@ -7,13 +7,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class ActiveMQConsumerConfig extends RouteBuilder {
 	
-	@Value("${iot.queue.name}")
-	private String queue;
+	@Value("${iot.topic.name}")
+	private String topic;
 	
 	 @Override
 	 public void configure() throws Exception {
-		 from("activemq:queue:" + queue)
-		 .log("Mensaje recibido: ${body}")
+		 from("activemq:topic:" + topic)
+		 .log("Received message: ${body}")
 		 .to("bean:ConsumerService?method=proccesMessage");
 	 }
 }

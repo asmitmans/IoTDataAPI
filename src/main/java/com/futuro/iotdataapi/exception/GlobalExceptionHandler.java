@@ -13,59 +13,56 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Validaciones fallidas en DTOs (@Valid)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ExceptionResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
-        Map<String, String> fieldErrors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(err ->
-                fieldErrors.put(err.getField(), err.getDefaultMessage())
-        );
+  // Validaciones fallidas en DTOs (@Valid)
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ExceptionResponse> handleValidationErrors(
+      MethodArgumentNotValidException ex) {
+    Map<String, String> fieldErrors = new HashMap<>();
+    ex.getBindingResult()
+        .getFieldErrors()
+        .forEach(err -> fieldErrors.put(err.getField(), err.getDefaultMessage()));
 
-        ExceptionResponse response = new ExceptionResponse(
-                new Date(),
-                "Validation failed",
-                fieldErrors.toString(),
-                HttpStatus.BAD_REQUEST.value()
-        );
+    ExceptionResponse response =
+        new ExceptionResponse(
+            new Date(),
+            "Validation failed",
+            fieldErrors.toString(),
+            HttpStatus.BAD_REQUEST.value());
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
-    
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ExceptionResponse> handleUnauthorizedException(Exception ex) {
-        ExceptionResponse response = new ExceptionResponse(
-                new Date(),
-                "Could not execute",
-                ex.getMessage(),
-                HttpStatus.UNAUTHORIZED.value()
-        );
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+  }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-    }
-    
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ExceptionResponse> handleNotFoundException(Exception ex) {
-        ExceptionResponse response = new ExceptionResponse(
-                new Date(),
-                "Not found",
-                ex.getMessage(),
-                HttpStatus.NOT_FOUND.value()
-        );
+  @ExceptionHandler(UnauthorizedException.class)
+  public ResponseEntity<ExceptionResponse> handleUnauthorizedException(Exception ex) {
+    ExceptionResponse response =
+        new ExceptionResponse(
+            new Date(), "Could not execute", ex.getMessage(), HttpStatus.UNAUTHORIZED.value());
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-    }
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+  }
 
-    // Errores generales
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ExceptionResponse> handleGenericException(Exception ex) {
-        ExceptionResponse response = new ExceptionResponse(
-                new Date(),
-                "Could not execute",
-                ex.getMessage(),
-                HttpStatus.INTERNAL_SERVER_ERROR.value()
-        );
+  @ExceptionHandler(NotFoundException.class)
+  public ResponseEntity<ExceptionResponse> handleNotFoundException(Exception ex) {
+    ExceptionResponse response =
+        new ExceptionResponse(
+            new Date(), "Not found", ex.getMessage(), HttpStatus.NOT_FOUND.value());
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    }
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+  }
 
+  // Errores generales
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ExceptionResponse> handleGenericException(Exception ex) {
+    // Log básico temporal
+    ex.printStackTrace(); // modificar a Logger (SLF4J o similar)
+
+    ExceptionResponse response =
+        new ExceptionResponse(
+            new Date(),
+            "Unexpected server error",
+            "An internal error occurred. Please contact support if the problem persists.",
+            HttpStatus.INTERNAL_SERVER_ERROR.value());
+
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+  }
 }

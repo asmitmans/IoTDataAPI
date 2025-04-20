@@ -1,10 +1,15 @@
 package com.futuro.iotdataapi.config;
 
 import com.futuro.iotdataapi.config.filter.JwtTokenValidator;
+import com.futuro.iotdataapi.config.filter.CompanyApiKeyAuthFilter;
+import com.futuro.iotdataapi.config.filter.SensorApiKeyAuthFilter;
+import com.futuro.iotdataapi.repository.CompanyRepository;
+import com.futuro.iotdataapi.repository.SensorRepository;
 import com.futuro.iotdataapi.service.UserDetailsServiceImpl;
 import com.futuro.iotdataapi.util.JwtUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -14,46 +19,76 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-
 @Configuration
 public class SecurityConfig {
 
-    private final UserDetailsServiceImpl userDetailsService;
-    private final JwtUtils jwtUtils;
+  private final UserDetailsServiceImpl userDetailsService;
+  private final JwtUtils jwtUtils;
+  private final CompanyRepository companyRepository;
+  private final SensorRepository sensorRepository;
 
-    public SecurityConfig(UserDetailsServiceImpl userDetailsService, JwtUtils jwtUtils) {
-        this.userDetailsService = userDetailsService;
-        this.jwtUtils = jwtUtils;
-    }
+  public SecurityConfig(
+      UserDetailsServiceImpl userDetailsService,
+      JwtUtils jwtUtils,
+      CompanyRepository companyRepository,
+      SensorRepository sensorRepository) {
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login/**").permitAll()
-                        .requestMatchers("/api/companies/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(new JwtTokenValidator(jwtUtils), UsernamePasswordAuthenticationFilter.class)
-                .httpBasic(httpBasic -> httpBasic.disable())
-                .formLogin(form -> form.disable());
+    this.userDetailsService = userDetailsService;
+    this.jwtUtils = jwtUtils;
+    this.companyRepository = companyRepository;
+    this.sensorRepository = sensorRepository;
+  }
 
-        return http.build();
-    }
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.csrf(csrf -> csrf.disable())
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers("/api/auth/login/**")
+                    .permitAll()
+                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                    .permitAll()
+                    .requestMatchers("/api/companies/**")
+                    .hasRole("ADMIN")
+                    .requestMatchers("/api/locations/**")
+                    .hasRole("ADMIN")
+                    .requestMatchers("/api/users/**")
+                    .hasRole("ADMIN")
+                    .requestMatchers("/api/sensors/**")
+                    .hasAnyRole("COMPANY", "ADMIN", "USER")
+                    .requestMatchers(HttpMethod.GET, "/api/v1/sensor_data")
+                    .hasAnyRole("COMPANY", "ADMIN", "USER")
+                    .requestMatchers(HttpMethod.POST, "/api/v1/sensor_data")
+                    .hasRole("SENSOR")
+                    .anyRequest()
+                    .authenticated())
+        .addFilterBefore(
+            new SensorApiKeyAuthFilter(sensorRepository, companyRepository),
+            UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(
+            new CompanyApiKeyAuthFilter(companyRepository),
+            UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(
+            new JwtTokenValidator(jwtUtils), UsernamePasswordAuthenticationFilter.class)
+        .httpBasic(httpBasic -> httpBasic.disable())
+        .formLogin(form -> form.disable());
 
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder);
-        return authProvider;
-    }
+    return http.build();
+  }
 
-    @Bean
-    public AuthenticationManager authenticationManager(DaoAuthenticationProvider authenticationProvider) {
-        return new ProviderManager(authenticationProvider);
-    }
+  @Bean
+  public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
+    DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+    authProvider.setUserDetailsService(userDetailsService);
+    authProvider.setPasswordEncoder(passwordEncoder);
+    return authProvider;
+  }
 
+  @Bean
+  public AuthenticationManager authenticationManager(
+      DaoAuthenticationProvider authenticationProvider) {
+    return new ProviderManager(authenticationProvider);
+  }
 }

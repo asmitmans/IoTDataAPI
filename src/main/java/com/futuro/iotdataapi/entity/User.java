@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name="users")
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,25 +15,37 @@ import java.util.Set;
 @Builder
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer id;
 
-    @Column(unique = true, nullable = false)
-    private String username;
+  @Column(unique = true, nullable = false)
+  private String username;
 
-    @Column(nullable = false)
-    private String password;
+  @Column(nullable = false)
+  private String password;
 
-    @Column(nullable = false)
-    private boolean enabled;
+  @Column(nullable = false)
+  private boolean enabled;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
+  @Column(nullable = true, length = 100)
+  private String names;
 
+  @Column(nullable = true, length = 100)
+  private String surnames;
+
+  @Column(nullable = true, length = 20)
+  private String alias;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "company_id", foreignKey = @ForeignKey(name = "fk_user_company"))
+  private Company company;
+
+  @ManyToMany(fetch = FetchType.EAGER)
+  @JoinTable(
+      name = "user_roles",
+      joinColumns = @JoinColumn(name = "user_id"),
+      inverseJoinColumns = @JoinColumn(name = "role_id"))
+  @Builder.Default
+  private Set<Role> roles = new HashSet<>();
 }

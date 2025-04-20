@@ -1,109 +1,141 @@
 # IoT Data API
 
 ## Descripción
-                                                                                 
+
 Este proyecto es una API para la gestión y almacenamiento de datos provenientes 
-de dispositivos IoT. Utiliza **Spring Boot**, **Spring Security con JWT**, y 
+de dispositivos IoT. Utiliza **Spring Boot**, **Spring Security con JWT** y 
 **PostgreSQL** como base de datos.
 
-## Configuración de la Base de Datos  
+---
 
-Este proyecto usa **PostgreSQL** como base de datos. Asegúrate de tener PostgreSQL 
-instalado y configurado correctamente.
+## Configuración de la base de datos
 
-### Creación de tablas
+Este proyecto usa **PostgreSQL** como motor de base de datos.  
+Asegúrate de tener PostgreSQL instalado y correctamente configurado.
 
-Ejecuta el siguiente script SQL para crear las tablas necesarias para la 
-autenticación y autorización de usuarios:
+> La aplicación **no crea automáticamente las tablas**.  
+> Debes ejecutarlas manualmente con el script correspondiente.
+
+### Script de creación de tablas
+Ejecuta el archivo SQL ubicado en:
+```bash:
+/src/main/create_iot_schema.sql
+```
+Este archivo contiene todas las sentencias `CREATE TABLE` necesarias para 
+el funcionamiento de la aplicación.
+
+---
+
+### Contraseña del usuario `admin`
+
+El script incluye un usuario `admin` con una contraseña predefinida (`admin`) 
+encriptada con `BCrypt`, solo con fines de prueba.
+
+**No se recomienda usarla en producción.**
+
+#### Cambiar la contraseña
+
+1. Genera un nuevo hash con `BCryptPasswordEncoder` en Java.
+2. Ejecuta en PostgreSQL:
 
 ```sql
--- Tabla de usuarios
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    enabled BOOLEAN NOT NULL DEFAULT TRUE
-);
-
--- Tabla de roles
-CREATE TABLE roles (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL
-);
-
--- Tabla relación entre usuarios y roles
-CREATE TABLE user_roles (
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,
-    role_id INT REFERENCES roles(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, role_id)
-);
-
--- Insertar rol ADMIN
-INSERT INTO roles (name) VALUES ('ADMIN') ON CONFLICT (name) DO NOTHING;
-
--- Insertar usuario ADMIN  
-INSERT INTO users (username, password, enabled) 
-VALUES ('admin', '$2a$12$HlJDc8.E7vkoOUfm8CK1.O3VvmCbfZ1cwdFKM59roZf6zdJljOXwi', TRUE) 
-ON CONFLICT (username) DO NOTHING;
-
--- Asignar rol ADMIN al usuario ADMIN
-INSERT INTO user_roles (user_id, role_id) 
-VALUES (
-    (SELECT id FROM users WHERE username = 'admin'), 
-    (SELECT id FROM roles WHERE name = 'ADMIN')
-) ON CONFLICT DO NOTHING;
+UPDATE users SET password = 'nuevo_hash' WHERE username = 'admin';
 ```
 
-## Nota sobre la seguridad de la contraseña del usuario `admin`
+## Configuración de `application.properties`
 
-Este proyecto incluye un usuario `admin` con una contraseña predefinida (`admin`) 
-encriptada con `BCrypt`. Esto se ha hecho únicamente con fines de demostración. 
+Este archivo **no está en el repositorio por seguridad**.
 
-Se recomienda encarecidamente cambiar esta contraseña en entornos de producción. 
+Para configurarlo:
 
-### Cómo cambiar la contraseña
+1. Copia `application.example.properties` -> renómbralo como 
+   `application.properties`
+2. Ubícalo en `src/main/resources/`
+3. Reemplaza los valores de base de datos:
 
-Para cambiar la contraseña por una más segura, sigue estos pasos:
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/iot_data_api
+spring.datasource.username=usuario
+spring.datasource.password=clave
+```
+---
 
-1. Genera una nueva contraseña encriptada usando `BCryptPasswordEncoder` en Java.
-2. Reemplázala en la base de datos con el siguiente comando:
+## Preparación de la base de datos
 
-   ```sql
-   UPDATE users SET password = 'nueva_hash' WHERE username = 'admin';
-   ```
+La creación completa del esquema se encuentra en:
 
-## Configuración del archivo `application.properties`   
+```bash
+/src/main/resources/create_iot_schema.sql
+```
 
-Este archivo contiene la configuración de la base de datos y 
-**no se encuentra en el repositorio por seguridad**.
-
-Para configurar la conexión, sigue estos pasos:
-
-1. Copia el archivo `application.example.properties` y renómbralo como 
-   `application.properties` dentro de `src/main/resources/`.
-2. Edita el archivo y reemplaza `tu_bbdd`, `tu_usuario` y `tu_contraseña` con las 
-   credenciales correctas de tu base de datos PostgreSQL.
-3. Guarda los cambios y ejecuta el proyecto.
+Este script incluye todas las tablas y datos necesarios para que la aplicación 
+funcione correctamente.
 
 ---
 
-### Endpoints de Autenticación y Acceso
+### Permisos requeridos para el usuario de la base de datos
 
-- **`POST /api/auth/login`** → Inicia sesión y devuelve un **JWT**.
-   - Enviar `username` y `password` en el **body** (JSON).
-   - Respuesta: `{ "accessToken": "JWT_TOKEN" }`.
+Una vez creada la base de datos, debes asignar los permisos necesarios al 
+usuario que la aplicación utilizará para conectarse.
 
-- **`GET /api/companies`** → Devuelve la lista de compañías (requiere autenticación).
-   - Incluir el **JWT** en el header:
-     ```http
-     Authorization: Bearer JWT_TOKEN
-     ```
-   - Respuesta: `200 OK` si el usuario tiene `ROLE_ADMIN`.
+> Reemplaza `user_bd` por el nombre real de tu usuario PostgreSQL.
 
-**Notas:**
-- Todos los endpoints protegidos requieren autenticación vía **JWT**.
-- Usar el token devuelto en el login para acceder a recursos protegidos.
+```sql
+-- Asignar permisos al usuario de base de datos
+GRANT USAGE ON SCHEMA public TO user_bd;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO user_bd;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO user_bd;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO user_bd;
+```
+
+Esto asegura que la aplicación pueda leer y escribir correctamente sin requerir 
+permisos administrativos.
 
 ---
 
+## Permisos, seguridad y endpoints
 
+| **Agente**   | **Seguridad**                          | **Puede hacer**                                                                 | **Endpoint(s)**                                 |
+|--------------|----------------------------------------|----------------------------------------------------------------------------------|-------------------------------------------------|
+| **ADMIN**    | JWT (username + password)              | Crear/editar/eliminar compañías, ubicaciones, usuarios y sensores              | `/api/companies/**`, `/api/locations/**`, `/api/users/**`, `/api/sensors/**` |
+| **COMPANY**  | API Key en `Authorization`             | Registrar sensores, consultar datos históricos de sus sensores                 | `POST /api/sensors`, `GET /api/v1/sensor_data` |
+| **SENSOR**   | API Key en `Authorization`             | Subir datos desde sensores (individual o en lote)                              | `POST /api/v1/sensor_data`                     |
+
+---
+
+### Endpoints implementados
+
+| Endpoint                        | Método   | Autenticación             | Rol requerido | Descripción                                                                 |
+|--------------------------------|----------|----------------------------|---------------|-----------------------------------------------------------------------------|
+| `/api/auth/login`              | POST     | Ninguna                   | N/A           | Iniciar sesión (`username/password`)                                        |
+| `/api/companies/**`            | Todos    | JWT                       | `ROLE_ADMIN`  | CRUD completo de compañías                                                  |
+| `/api/locations/**`            | Todos    | JWT                       | `ROLE_ADMIN`  | CRUD completo de ubicaciones                                                |
+| `/api/sensors`                 | POST     | API Key                   | `ROLE_COMPANY`| Registrar nuevo sensor (`company_api_key`)                                  |
+| `/api/v1/sensor_data`          | POST     | API Key (Header + Body)   | `ROLE_SENSOR` | Subir uno o varios registros de sensores (`sensor_api_key`)                |
+
+---
+
+### Notas de seguridad
+
+- Todos los endpoints protegidos deben usarse vía **HTTPS** en producción.
+- Sensores y compañías **no usan JWT**, solo claves API en `Authorization`.
+- El backend valida que el `sensor_api_key` enviado en el **header y body** coincidan.
+
+---
+
+## Notas para desarrolladores
+
+Si agregas una nueva clase `@Entity`, **debes actualizar el script de base de datos** 
+ubicado en:
+```bash:
+/src/main/create_iot_schema.sql
+```
+Esto es especialmente importante si se activa:
+
+```properties
+spring.jpa.hibernate.ddl-auto=validate
+```
+
+> Si las tablas o columnas no coinciden con las entidades, la app no iniciará correctamente.
+
+---

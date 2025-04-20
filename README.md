@@ -3,44 +3,91 @@
 ## Descripción
 
 Este proyecto es una API para la gestión y almacenamiento de datos provenientes 
-de dispositivos IoT. Utiliza **Spring Boot**, **Spring Security con JWT** y 
-**PostgreSQL** como base de datos.
+de dispositivos IoT. Utiliza *Spring Boot, **Spring Security con JWT* y 
+*PostgreSQL* como base de datos.
 
 ---
 
-## Configuración de la base de datos
+## Requisitos previos
 
-Este proyecto usa **PostgreSQL** como motor de base de datos.  
-Asegúrate de tener PostgreSQL instalado y correctamente configurado.
+Antes de ejecutar la API asegúrate de tener instalado:
 
-> La aplicación **no crea automáticamente las tablas**.  
-> Debes ejecutarlas manualmente con el script correspondiente.
-
-### Script de creación de tablas
-Ejecuta el archivo SQL ubicado en:
-```bash:
-/src/main/create_iot_schema.sql
-```
-Este archivo contiene todas las sentencias `CREATE TABLE` necesarias para 
-el funcionamiento de la aplicación.
+- Java 21
+- PostgreSQL
+- Maven
+- (Opcional) ActiveMQ (si vas a utilizar los consumidores de eventos)
 
 ---
 
-### Contraseña del usuario `admin`
+## Pasos para ejecutar la API
 
-El script incluye un usuario `admin` con una contraseña predefinida (`admin`) 
-encriptada con `BCrypt`, solo con fines de prueba.
+1. *Crear una base de datos en PostgreSQL*
 
-**No se recomienda usarla en producción.**
+   Crea una base de datos vacía para la API.  
+   Por ejemplo:
 
-#### Cambiar la contraseña
+   sql
+   CREATE DATABASE iot_data_api;
+   
 
-1. Genera un nuevo hash con `BCryptPasswordEncoder` en Java.
-2. Ejecuta en PostgreSQL:
+2. *Ejecutar el script de creación de tablas*
 
-```sql
+   Ejecuta el siguiente script SQL manualmente:
+
+   
+   src/main/resources/sql/create_iot_schema.sql
+   
+
+   Este archivo contiene todas las sentencias CREATE TABLE y datos iniciales 
+   requeridos para el funcionamiento de la aplicación.
+
+3. *Configurar las credenciales*
+
+   Crea una copia del archivo de ejemplo:
+
+   bash
+   cp src/main/resources/application.example.properties src/main/resources/application.properties
+   
+
+   Edita application.properties y reemplaza las credenciales de tu base de datos:
+
+   properties
+   spring.datasource.url=jdbc:postgresql://localhost:5432/iot_data_api
+   spring.datasource.username=tu_usuario
+   spring.datasource.password=tu_clave
+   
+
+   Si utilizas ActiveMQ, también debes configurar sus credenciales en ese archivo:
+
+   properties
+   spring.activemq.broker-url=tcp://localhost:61616
+   spring.activemq.user=usuario_activemq
+   spring.activemq.password=clave_activemq
+   
+
+4. *Ejecutar la aplicación*
+
+   En la raíz del proyecto, compila y ejecuta:
+
+   bash
+   mvn spring-boot:run
+   
+
+   La API quedará disponible en http://localhost:8080.
+
+---
+
+## Contraseña del usuario admin
+
+El script incluye un usuario admin con contraseña admin (encriptada con BCrypt)  
+*solo para fines de prueba*.
+
+*No se recomienda usarla en producción.*
+
+Para cambiarla, genera un nuevo hash y actualiza directamente la base de datos:
+
+sql
 UPDATE users SET password = 'nuevo_hash' WHERE username = 'admin';
-```
 
 ## Configuración de `application.properties`
 
@@ -110,7 +157,7 @@ permisos administrativos.
 | `/api/auth/login`              | POST     | Ninguna                   | N/A           | Iniciar sesión (`username/password`)                                        |
 | `/api/companies/**`            | Todos    | JWT                       | `ROLE_ADMIN`  | CRUD completo de compañías                                                  |
 | `/api/locations/**`            | Todos    | JWT                       | `ROLE_ADMIN`  | CRUD completo de ubicaciones                                                |
-| `/api/sensors`                 | Todos     | API Key                   | `ROLE_COMPANY`| CRUD completo de sensor (`company_api_key`)                                  |
+| `/api/sensors`                 | Todos     | API Key                   | `ROLE_COMPANY`| CRUD completo de sensores (`company_api_key`)                                  |
 | `/api/v1/sensor_data`          | POST     | API Key (Header + Body)   | `ROLE_SENSOR` | Subir uno o varios registros de sensores (`sensor_api_key`)                |
 | `/api/v1/sensor_data`          | GET     | API Key (Header)   		| `ROLE_SENSOR` | Obtener registros de sensores (`sensor_api_key`)                |
 

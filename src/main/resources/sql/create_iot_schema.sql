@@ -136,3 +136,40 @@ SELECT u.id, r.id
 FROM users u, roles r
 WHERE u.username = 'testuser' AND r.name = 'USER';
 
+-- ------------------------------------------------------------
+-- Insertar empresa de prueba para testuser
+INSERT INTO company (company_api_key, company_name)
+VALUES ('def0322d-be48-4ae7-bf8d-a829b1945309', 'mycompany');
+
+-- Insertar rol ADMIN y USER
+INSERT INTO roles (name) VALUES ('ADMIN') ON CONFLICT (name) DO NOTHING;
+INSERT INTO roles (name) VALUES ('USER') ON CONFLICT (name) DO NOTHING;
+
+-- Insertar usuario ADMIN (sin company_id)
+INSERT INTO users (username, password, enabled)
+VALUES (
+    'admin',
+    '$2a$12$HlJDc8.E7vkoOUfm8CK1.O3VvmCbfZ1cwdFKM59roZf6zdJljOXwi',
+    TRUE
+) ON CONFLICT (username) DO NOTHING;
+
+-- Insertar usuario testuser (con company_id = 1)
+-- Nota: la contraseña es 'testuser'
+INSERT INTO users (username, password, enabled, company_id)
+VALUES (
+    'testuser',
+    '$2y$10$UGGZSJ1rZj6Fj6xitaZ2D.v8tNixiqcxWfMtxCcXlfH4vxivV9a16',
+    TRUE,
+    1
+);
+
+-- Asignar roles a los usuarios
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id
+FROM users u, roles r
+WHERE u.username = 'admin' AND r.name = 'ADMIN';
+
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id
+FROM users u, roles r
+WHERE u.username = 'testuser' AND r.name = 'USER';

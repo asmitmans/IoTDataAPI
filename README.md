@@ -110,7 +110,7 @@ permisos administrativos.
 | `/api/auth/login`              | POST     | Ninguna                   | N/A           | Iniciar sesión (`username/password`)                                        |
 | `/api/companies/**`            | Todos    | JWT                       | `ROLE_ADMIN`  | CRUD completo de compañías                                                  |
 | `/api/locations/**`            | Todos    | JWT                       | `ROLE_ADMIN`  | CRUD completo de ubicaciones                                                |
-| `/api/sensors`                 | POST     | API Key                   | `ROLE_COMPANY`| Registrar nuevo sensor (`company_api_key`)                                  |
+| `/api/sensors`                 | Todos     | API Key                   | `ROLE_COMPANY`| CRUD completo de sensor (`company_api_key`)                                  |
 | `/api/v1/sensor_data`          | POST     | API Key (Header + Body)   | `ROLE_SENSOR` | Subir uno o varios registros de sensores (`sensor_api_key`)                |
 
 ---

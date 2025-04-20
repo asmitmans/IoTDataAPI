@@ -26,9 +26,9 @@ Antes de ejecutar la API asegúrate de tener instalado:
    Crea una base de datos vacía para la API.  
    Por ejemplo:
 
-   sql
+```sql
    CREATE DATABASE iot_data_api;
-   
+```
 
 2. *Ejecutar el script de creación de tablas*
 
@@ -45,33 +45,34 @@ Antes de ejecutar la API asegúrate de tener instalado:
 
    Crea una copia del archivo de ejemplo:
 
-   bash
+```bash
    cp src/main/resources/application.example.properties src/main/resources/application.properties
-   
+```
 
    Edita application.properties y reemplaza las credenciales de tu base de datos:
 
-   properties
+```properties
    spring.datasource.url=jdbc:postgresql://localhost:5432/iot_data_api
    spring.datasource.username=tu_usuario
    spring.datasource.password=tu_clave
-   
+```
 
    Si utilizas ActiveMQ, también debes configurar sus credenciales en ese archivo:
 
-   properties
+```properties
    spring.activemq.broker-url=tcp://localhost:61616
    spring.activemq.user=usuario_activemq
    spring.activemq.password=clave_activemq
+```
    
 
 4. *Ejecutar la aplicación*
 
    En la raíz del proyecto, compila y ejecuta:
 
-   bash
+```bash
    mvn spring-boot:run
-   
+```
 
    La API quedará disponible en http://localhost:8080.
 
@@ -86,8 +87,9 @@ El script incluye un usuario admin con contraseña admin (encriptada con BCrypt)
 
 Para cambiarla, genera un nuevo hash y actualiza directamente la base de datos:
 
-sql
+```sql
 UPDATE users SET password = 'nuevo_hash' WHERE username = 'admin';
+```
 
 ## Configuración de `application.properties`
 
